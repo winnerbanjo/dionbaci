@@ -61,6 +61,33 @@ export function normalizeItem(item: RawItem): ShopItem | null {
   };
 }
 
+function getCuratedBeautyItems(): ShopItem[] {
+  return curatedBeautyCatalog.map((item, index) => ({
+    id: `curated-beauty-${index + 1}`,
+    slug: item.slug,
+    name: item.name,
+    category: item.category,
+    image: item.image,
+    type: "beauty",
+    createdAt: new Date(`2026-03-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`),
+  }));
+}
+
+function mergeCuratedBeautyItems(items: ShopItem[]) {
+  const catalog = [...items];
+  const existingImages = new Set(
+    catalog.filter((item) => item.type === "beauty").map((item) => item.image)
+  );
+
+  for (const item of getCuratedBeautyItems()) {
+    if (!existingImages.has(item.image)) {
+      catalog.push(item);
+    }
+  }
+
+  return catalog;
+}
+
 export async function getAllItems() {
   try {
     const rows = await prisma.item.findMany({
@@ -69,12 +96,14 @@ export async function getAllItems() {
       },
     });
 
-    return rows
-      .map((item) => normalizeItem(item))
-      .filter((item): item is ShopItem => item !== null);
+    return mergeCuratedBeautyItems(
+      rows
+        .map((item) => normalizeItem(item))
+        .filter((item): item is ShopItem => item !== null)
+    );
   } catch (error) {
     console.error("DATABASE ERROR:", error);
-    return [];
+    return getCuratedBeautyItems();
   }
 }
 
@@ -89,9 +118,11 @@ export async function getItemsByType(type: "look" | "beauty") {
       },
     });
 
-    const items = rows
+    const items = mergeCuratedBeautyItems(
+      rows
       .map((item) => normalizeItem(item))
-      .filter((item): item is ShopItem => item !== null);
+      .filter((item): item is ShopItem => item !== null)
+    );
 
     if (type === "beauty") {
       const curatedOrder = new Map<string, number>(
@@ -110,7 +141,7 @@ export async function getItemsByType(type: "look" | "beauty") {
     return items;
   } catch (error) {
     console.error("DATABASE ERROR:", error);
-    return [];
+    return type === "beauty" ? getCuratedBeautyItems() : [];
   }
 }
 
