@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { curatedBeautyByImage, curatedBeautyCatalog, curatedBeautyImageSet } from "@/lib/beauty-catalog";
 import { ShopItem } from "@/data/shop";
 
 const FALLBACK_IMAGE = "/images/fallback.jpg";
@@ -41,17 +42,20 @@ function normalizeImagePath(image?: string | null) {
 export function normalizeItem(item: RawItem): ShopItem | null {
   const name = item.name?.trim();
   const type = item.type?.trim().toLowerCase();
+  const image = normalizeImagePath(item.image);
 
   if (!name || !type) {
     return null;
   }
 
+  const curatedBeautyItem = type === "beauty" ? curatedBeautyByImage.get(image) : null;
+
   return {
-    id: item.id?.trim() || `fallback-${createItemSlug(name)}`,
-    slug: item.slug?.trim() || createItemSlug(name),
-    name,
-    category: item.category?.trim() || "Atelier",
-    image: normalizeImagePath(item.image),
+    id: item.id?.trim() || `fallback-${createItemSlug(curatedBeautyItem?.name ?? name)}`,
+    slug: curatedBeautyItem?.slug || item.slug?.trim() || createItemSlug(name),
+    name: curatedBeautyItem?.name || name,
+    category: curatedBeautyItem?.category || item.category?.trim() || "Atelier",
+    image,
     type,
     createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
   };
@@ -85,9 +89,25 @@ export async function getItemsByType(type: "look" | "beauty") {
       },
     });
 
-    return rows
+    const items = rows
       .map((item) => normalizeItem(item))
       .filter((item): item is ShopItem => item !== null);
+
+    if (type === "beauty") {
+      const curatedOrder = new Map<string, number>(
+        curatedBeautyCatalog.map((item, index) => [item.image, index])
+      );
+
+      return items
+        .filter((item) => curatedBeautyImageSet.has(item.image))
+        .sort((left, right) => {
+          const leftIndex = curatedOrder.get(left.image) ?? 999;
+          const rightIndex = curatedOrder.get(right.image) ?? 999;
+          return leftIndex - rightIndex;
+        });
+    }
+
+    return items;
   } catch (error) {
     console.error("DATABASE ERROR:", error);
     return [];

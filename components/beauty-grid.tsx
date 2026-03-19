@@ -23,22 +23,22 @@ export function BeautyGrid({ items }: BeautyGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-3 2xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-px bg-line xl:grid-cols-3">
       {items.map((item, index) => (
         <FadeIn
           key={item.slug}
           delay={index * 0.04}
-          className="bg-paper p-4 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg sm:px-4 sm:py-6"
+          className="bg-paper p-4 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg sm:p-5"
         >
-          <div className="flex h-full flex-col gap-2">
+          <div className="mx-auto flex h-full max-w-[22rem] flex-col gap-2">
             <AnimatedImage
               src={item.image}
               alt={item.name}
               aspect="portrait"
               className="transition-all duration-300 ease-in-out hover:shadow-lg"
             />
-            <div className="flex min-h-[5.5rem] flex-1 flex-col justify-start gap-2">
-              <h3 className="text-base leading-tight sm:text-xl">{item.name}</h3>
+            <div className="flex min-h-[6rem] flex-1 flex-col justify-start gap-2">
+              <h3 className="text-base leading-tight sm:text-lg">{item.name}</h3>
               <p className="text-[10px] uppercase tracking-[0.22em] text-mist sm:text-[11px]">
                 {item.category}
               </p>

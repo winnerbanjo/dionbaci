@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 
 type ItemType = "look" | "beauty";
+type AdminView = "dashboard" | "products" | "beauty" | "bookings" | "subscribers" | "settings";
 
 type Item = {
   id: string;
@@ -191,6 +192,7 @@ export default function AdminPage() {
   const [newItemFile, setNewItemFile] = useState<File | null>(null);
   const [editFiles, setEditFiles] = useState<Record<string, File | null>>({});
   const [settings, setSettings] = useState<SettingsForm>(defaultSettings);
+  const [currentView, setCurrentView] = useState<AdminView>("dashboard");
 
   useEffect(() => {
     const auth = localStorage.getItem("admin-auth");
@@ -271,6 +273,38 @@ export default function AdminPage() {
     [bookings]
   );
   const recentSubscribers = useMemo(() => subscribers.slice(0, 6), [subscribers]);
+  const viewLabels: Record<AdminView, string> = {
+    dashboard: "Dashboard",
+    products: "Products",
+    beauty: "Beauty Products",
+    bookings: "Bookings",
+    subscribers: "Subscribers",
+    settings: "Settings",
+  };
+  const visibleProductSections =
+    currentView === "products"
+      ? [
+          {
+            id: "looks",
+            eyebrow: "Products",
+            title: "Fashion looks",
+            description: "Edit, replace imagery, or remove atelier pieces without leaving the dashboard.",
+            list: looks,
+            empty: "No looks added yet.",
+          },
+        ]
+      : currentView === "beauty"
+        ? [
+            {
+              id: "beauty",
+              eyebrow: "Beauty Products",
+              title: "Beauty catalog",
+              description: "Keep the beauty edit clean, direct, and ready for order.",
+              list: beautyProducts,
+              empty: "No beauty products added yet.",
+            },
+          ]
+        : [];
 
   const stats = [
     { label: "Total Products", value: String(items.length) },
@@ -489,24 +523,20 @@ export default function AdminPage() {
             </div>
 
             <nav className="grid gap-2 text-sm text-white/70">
-              <a href="#dashboard" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Dashboard
-              </a>
-              <a href="#looks" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Products
-              </a>
-              <a href="#beauty" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Beauty Products
-              </a>
-              <a href="#bookings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Bookings
-              </a>
-              <a href="#subscribers" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Subscribers
-              </a>
-              <a href="#settings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Settings
-              </a>
+              {(Object.keys(viewLabels) as AdminView[]).map((view) => (
+                <button
+                  key={view}
+                  type="button"
+                  onClick={() => setCurrentView(view)}
+                  className={`rounded-full border px-4 py-3 text-left transition ${
+                    currentView === view
+                      ? "border-white bg-white text-black"
+                      : "border-white/10 hover:border-white/40 hover:text-white"
+                  }`}
+                >
+                  {viewLabels[view]}
+                </button>
+              ))}
             </nav>
 
             <div className="grid gap-px border border-white/10 bg-white/10">
@@ -525,6 +555,17 @@ export default function AdminPage() {
         </aside>
 
         <div className="space-y-8 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+          <div className="flex items-end justify-between gap-4 border-b border-black/10 pb-5">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Admin Workspace</p>
+              <h2 className="mt-3 font-serif text-4xl">{viewLabels[currentView]}</h2>
+            </div>
+            <p className="max-w-xl text-sm leading-7 text-[#6a6a6a]">
+              A cleaner operations view for products, subscribers, bookings, and consultation settings.
+            </p>
+          </div>
+
+          {currentView === "dashboard" ? (
           <section id="dashboard" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <SectionCard
               eyebrow="Dashboard Overview"
@@ -569,8 +610,11 @@ export default function AdminPage() {
               </div>
             </SectionCard>
           </section>
+          ) : null}
 
+          {currentView === "products" || currentView === "beauty" || currentView === "settings" ? (
           <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            {currentView === "products" || currentView === "beauty" ? (
             <SectionCard
               eyebrow="Products"
               title="Add a new product"
@@ -649,7 +693,9 @@ export default function AdminPage() {
                 </button>
               </form>
             </SectionCard>
+            ) : null}
 
+            {currentView === "settings" || currentView === "products" ? (
             <SectionCard
               eyebrow="Consultation Settings"
               title="Pricing control"
@@ -685,8 +731,11 @@ export default function AdminPage() {
                 </div>
               </form>
             </SectionCard>
+            ) : null}
           </section>
+          ) : null}
 
+          {currentView === "bookings" ? (
           <SectionCard
             eyebrow="Bookings"
             title="Consultation requests"
@@ -775,7 +824,9 @@ export default function AdminPage() {
               {bookingError ? <p className="text-sm text-[#6a6a6a]">{bookingError}</p> : null}
             </div>
           </SectionCard>
+          ) : null}
 
+          {currentView === "subscribers" ? (
           <SectionCard
             eyebrow="Subscribers"
             title="Email audience"
@@ -815,25 +866,9 @@ export default function AdminPage() {
               {subscriberError ? <p className="text-sm text-[#6a6a6a]">{subscriberError}</p> : null}
             </div>
           </SectionCard>
+          ) : null}
 
-          {[
-            {
-              id: "looks",
-              eyebrow: "Products",
-              title: "Fashion looks",
-              description: "Edit, replace imagery, or remove atelier pieces without leaving the dashboard.",
-              list: looks,
-              empty: "No looks added yet.",
-            },
-            {
-              id: "beauty",
-              eyebrow: "Beauty Products",
-              title: "Beauty catalog",
-              description: "Keep the beauty edit clean, direct, and ready for order.",
-              list: beautyProducts,
-              empty: "No beauty products added yet.",
-            },
-          ].map((section) => (
+          {visibleProductSections.map((section) => (
             <SectionCard
               key={section.id}
               eyebrow={section.eyebrow}

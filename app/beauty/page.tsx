@@ -34,7 +34,7 @@ export default async function BeautyPage() {
       <Section
         eyebrow="Beauty Edit"
         title="Body and hair essentials with a clean, deliberate point of view."
-        description={<p>Each product is presented with clarity, balance, and a direct path to order.</p>}
+        description={<p>Each product is presented with clean naming, balanced spacing, and a direct path to order.</p>}
         border={false}
       >
         <BeautyGrid items={products} />
