@@ -35,6 +35,12 @@ export const curatedBeautyCatalog = [
     category: "Hair Ritual",
     image: "/images/beauty/IMG_9805.PNG",
   },
+  {
+    slug: "hair-couture-ritual-set",
+    name: "Hair Couture Ritual Set",
+    category: "Hair Care Set",
+    image: "/images/beauty/hair-couture-set.PNG",
+  },
 ] as const;
 
 export const curatedBeautyImageSet = new Set<string>(curatedBeautyCatalog.map((item) => item.image));

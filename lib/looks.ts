@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { curatedBeautyByImage, curatedBeautyCatalog, curatedBeautyImageSet } from "@/lib/beauty-catalog";
+import { curatedLookByImage, curatedLookCatalog, curatedLookImageSet } from "@/lib/look-catalog";
 import { ShopItem } from "@/data/shop";
 
 const FALLBACK_IMAGE = "/images/fallback.jpg";
@@ -49,12 +50,13 @@ export function normalizeItem(item: RawItem): ShopItem | null {
   }
 
   const curatedBeautyItem = type === "beauty" ? curatedBeautyByImage.get(image) : null;
+  const curatedLookItem = type === "look" ? curatedLookByImage.get(image) : null;
 
   return {
-    id: item.id?.trim() || `fallback-${createItemSlug(curatedBeautyItem?.name ?? name)}`,
-    slug: curatedBeautyItem?.slug || item.slug?.trim() || createItemSlug(name),
-    name: curatedBeautyItem?.name || name,
-    category: curatedBeautyItem?.category || item.category?.trim() || "Atelier",
+    id: item.id?.trim() || `fallback-${createItemSlug(curatedBeautyItem?.name ?? curatedLookItem?.name ?? name)}`,
+    slug: curatedBeautyItem?.slug || curatedLookItem?.slug || item.slug?.trim() || createItemSlug(name),
+    name: curatedBeautyItem?.name || curatedLookItem?.name || name,
+    category: curatedBeautyItem?.category || curatedLookItem?.category || item.category?.trim() || "Atelier",
     image,
     type,
     createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
@@ -88,6 +90,33 @@ function mergeCuratedBeautyItems(items: ShopItem[]) {
   return catalog;
 }
 
+function getCuratedLookItems(): ShopItem[] {
+  return curatedLookCatalog.map((item, index) => ({
+    id: `curated-look-${index + 1}`,
+    slug: item.slug,
+    name: item.name,
+    category: item.category,
+    image: item.image,
+    type: "look",
+    createdAt: new Date(`2026-02-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`),
+  }));
+}
+
+function mergeCuratedLookItems(items: ShopItem[]) {
+  const catalog = [...items];
+  const existingImages = new Set(
+    catalog.filter((item) => item.type === "look").map((item) => item.image)
+  );
+
+  for (const item of getCuratedLookItems()) {
+    if (!existingImages.has(item.image)) {
+      catalog.push(item);
+    }
+  }
+
+  return catalog;
+}
+
 export async function getAllItems() {
   try {
     const rows = await prisma.item.findMany({
@@ -96,14 +125,16 @@ export async function getAllItems() {
       },
     });
 
-    return mergeCuratedBeautyItems(
-      rows
+    return mergeCuratedLookItems(
+      mergeCuratedBeautyItems(
+        rows
         .map((item) => normalizeItem(item))
         .filter((item): item is ShopItem => item !== null)
+      )
     );
   } catch (error) {
     console.error("DATABASE ERROR:", error);
-    return getCuratedBeautyItems();
+    return [...getCuratedLookItems(), ...getCuratedBeautyItems()];
   }
 }
 
@@ -138,10 +169,24 @@ export async function getItemsByType(type: "look" | "beauty") {
         });
     }
 
+    if (type === "look") {
+      const curatedOrder = new Map<string, number>(
+        curatedLookCatalog.map((item, index) => [item.image, index])
+      );
+
+      return items
+        .filter((item) => curatedLookImageSet.has(item.image))
+        .sort((left, right) => {
+          const leftIndex = curatedOrder.get(left.image) ?? 999;
+          const rightIndex = curatedOrder.get(right.image) ?? 999;
+          return leftIndex - rightIndex;
+        });
+    }
+
     return items;
   } catch (error) {
     console.error("DATABASE ERROR:", error);
-    return type === "beauty" ? getCuratedBeautyItems() : [];
+    return type === "beauty" ? getCuratedBeautyItems() : getCuratedLookItems();
   }
 }
 
@@ -151,9 +196,9 @@ export async function getLookBySlug(slug: string) {
       where: { slug },
     });
 
-    return item ? normalizeItem(item) : null;
+    return item ? normalizeItem(item) : getCuratedLookItems().find((entry) => entry.slug === slug) ?? null;
   } catch (error) {
     console.error("DATABASE ERROR:", error);
-    return null;
+    return getCuratedLookItems().find((entry) => entry.slug === slug) ?? null;
   }
 }
