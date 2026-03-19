@@ -23,3 +23,24 @@ model Setting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model Booking {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String
+  service      String
+  date         String
+  time         String
+  type         String
+  notes        String?
+  paymentProof String?
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

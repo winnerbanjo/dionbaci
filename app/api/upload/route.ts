@@ -20,11 +20,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cloudinary is not configured" }, { status: 503 });
     }
 
-    const folder = type === "beauty" ? "dionbaci/beauty" : "dionbaci/looks";
+    const folderMap: Record<string, string> = {
+      beauty: "dionbaci/beauty",
+      look: "dionbaci/looks",
+      receipt: "dionbaci/receipts",
+    };
+
+    const folder = folderMap[type] ?? "dionbaci/looks";
 
     const result = await cloudinary.uploader.upload(file, {
       folder,
-      resource_type: "image",
+      resource_type: "auto",
     });
 
     return NextResponse.json({ secure_url: result.secure_url });

@@ -7,10 +7,29 @@ import { FadeIn } from "@/components/fade-in";
 export function NewsletterSection() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!email.trim()) return;
+
+    setError(null);
+
+    const response = await fetch("/api/subscribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setError(data?.error ?? "Unable to subscribe right now");
+      return;
+    }
+
+    localStorage.setItem("subscribed", "true");
     setSubmitted(true);
     setEmail("");
   };
@@ -41,6 +60,7 @@ export function NewsletterSection() {
               Thank you. You will be first to know when the next release arrives.
             </p>
           ) : null}
+          {error ? <p className="mt-4 text-sm text-mist">{error}</p> : null}
         </FadeIn>
       </div>
     </section>

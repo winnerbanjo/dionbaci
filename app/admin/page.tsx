@@ -25,6 +25,21 @@ type ItemForm = {
   type: ItemType;
 };
 
+type Booking = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  date: string;
+  time: string;
+  type: string;
+  notes: string | null;
+  paymentProof: string | null;
+  status: string;
+  createdAt: string;
+};
+
 type SettingsForm = {
   bridal_bespoke_fee: string;
   bridal_customization_fee: string;
@@ -152,14 +167,17 @@ export default function AdminPage() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bookingError, setBookingError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [itemSavingId, setItemSavingId] = useState<string | null>(null);
   const [uploadingForId, setUploadingForId] = useState<string | null>(null);
+  const [bookingSavingId, setBookingSavingId] = useState<string | null>(null);
   const [creatingItem, setCreatingItem] = useState(false);
   const [form, setForm] = useState<ItemForm>(defaultItemForm);
   const [newItemFile, setNewItemFile] = useState<File | null>(null);
@@ -180,13 +198,15 @@ export default function AdminPage() {
     setLoading(true);
 
     try {
-      const [itemsResponse, settingsResponse] = await Promise.all([
+      const [itemsResponse, settingsResponse, bookingsResponse] = await Promise.all([
         fetch("/api/admin/items", { cache: "no-store" }),
         fetch("/api/admin/settings", { cache: "no-store" }),
+        fetch("/api/admin/bookings", { cache: "no-store" }),
       ]);
 
       const itemsData = await itemsResponse.json().catch(() => null);
       const settingsData = await settingsResponse.json().catch(() => null);
+      const bookingsData = await bookingsResponse.json().catch(() => null);
 
       if (!itemsResponse.ok) {
         setError(itemsData?.error ?? "Unable to load items");
@@ -201,6 +221,14 @@ export default function AdminPage() {
       } else {
         setSettingsError(null);
         setSettings(settingsData?.settings ?? defaultSettings);
+      }
+
+      if (!bookingsResponse.ok) {
+        setBookingError(bookingsData?.error ?? "Unable to load bookings");
+        setBookings([]);
+      } else {
+        setBookingError(null);
+        setBookings(bookingsData?.bookings ?? []);
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load dashboard");
@@ -220,10 +248,16 @@ export default function AdminPage() {
   const upcomingDates = useMemo(() => getUpcomingConsultationDates(), []);
   const looks = useMemo(() => items.filter((item) => item.type === "look"), [items]);
   const beautyProducts = useMemo(() => items.filter((item) => item.type === "beauty"), [items]);
+  const pendingBookings = useMemo(
+    () => bookings.filter((booking) => booking.status.toLowerCase() === "pending"),
+    [bookings]
+  );
 
   const stats = [
     { label: "Total Products", value: String(items.length) },
+    { label: "Consultations", value: String(bookings.length) },
     { label: "Beauty Products", value: String(beautyProducts.length) },
+    { label: "Pending", value: String(pendingBookings.length) },
     { label: "Fashion Looks", value: String(looks.length) },
     { label: "Consultation Days", value: "Tue / Thu" },
   ];
@@ -353,6 +387,50 @@ export default function AdminPage() {
     setSettingsSaving(false);
   };
 
+  const handleBookingStatus = async (booking: Booking, status: "confirmed" | "pending") => {
+    setBookingSavingId(booking.id);
+
+    const response = await fetch(`/api/admin/bookings/${booking.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setBookingError(data?.error ?? "Unable to update booking");
+      setBookingSavingId(null);
+      return;
+    }
+
+    setBookings((current) =>
+      current.map((entry) => (entry.id === booking.id ? { ...entry, status } : entry))
+    );
+    setBookingSavingId(null);
+  };
+
+  const handleBookingDelete = async (id: string) => {
+    setBookingSavingId(id);
+
+    const response = await fetch(`/api/admin/bookings/${id}`, {
+      method: "DELETE",
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setBookingError(data?.error ?? "Unable to delete booking");
+      setBookingSavingId(null);
+      return;
+    }
+
+    setBookings((current) => current.filter((booking) => booking.id !== id));
+    setBookingSavingId(null);
+  };
+
   const logout = () => {
     localStorage.removeItem("admin-auth");
     router.push("/admin/login");
@@ -389,8 +467,8 @@ export default function AdminPage() {
               <a href="#settings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
                 Consultation Settings
               </a>
-              <a href="#orders" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Orders
+              <a href="#bookings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Bookings
               </a>
             </nav>
 
@@ -545,27 +623,91 @@ export default function AdminPage() {
             </SectionCard>
 
             <SectionCard
-              eyebrow="Orders"
-              title="Order pipeline"
-              description="A placeholder surface for WhatsApp and direct-order activity until formal order storage is added."
+              eyebrow="Bookings"
+              title="Consultation requests"
+              description="Track new consultation requests, review payment proof, and confirm appointments from one place."
             >
-              <div
-                id="orders"
-                className="grid gap-4 border border-dashed border-black/15 bg-[#faf8f3] p-6 text-sm leading-7 text-[#6a6a6a]"
-              >
-                <p>Orders currently convert through WhatsApp. This panel is ready for the next step: persisted order records and status tracking.</p>
-                <div className="grid gap-px border border-black/10 bg-black/10 sm:grid-cols-3">
-                  {[
-                    { label: "Incoming", value: "WhatsApp" },
-                    { label: "Status", value: "Placeholder" },
-                    { label: "Next Phase", value: "Order Sync" },
-                  ].map((item) => (
-                    <div key={item.label} className="bg-white p-4">
-                      <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">{item.label}</p>
-                      <p className="mt-2 font-serif text-xl text-black">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
+              <div id="bookings" className="grid gap-4">
+                {bookings.length === 0 ? (
+                  <div className="border border-dashed border-black/15 bg-[#faf8f3] p-6 text-sm leading-7 text-[#6a6a6a]">
+                    No bookings submitted yet.
+                  </div>
+                ) : (
+                  bookings.map((booking) => (
+                    <article key={booking.id} className="border border-black/10 bg-[#fcfbf8] p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">
+                            {booking.status}
+                          </p>
+                          <h3 className="font-serif text-2xl leading-tight">{booking.name}</h3>
+                          <p className="text-sm leading-7 text-[#6a6a6a]">
+                            {booking.service} • {booking.type}
+                          </p>
+                        </div>
+                        <div className="text-right text-sm leading-7 text-[#6a6a6a]">
+                          <p>{booking.date}</p>
+                          <p>{booking.time}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                        <div className="grid gap-2 text-sm leading-7 text-[#6a6a6a]">
+                          <p><span className="text-black">Email:</span> {booking.email}</p>
+                          <p><span className="text-black">Phone:</span> {booking.phone}</p>
+                          {booking.notes ? (
+                            <p><span className="text-black">Notes:</span> {booking.notes}</p>
+                          ) : null}
+                        </div>
+                        <div className="grid gap-3">
+                          {booking.paymentProof ? (
+                            <a
+                              href={booking.paymentProof}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="luxury-button luxury-button--ghost justify-center"
+                            >
+                              View Receipt
+                            </a>
+                          ) : (
+                            <div className="border border-dashed border-black/15 px-4 py-3 text-sm text-[#6a6a6a]">
+                              No receipt uploaded
+                            </div>
+                          )}
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleBookingStatus(booking, "confirmed")}
+                              className="luxury-button px-4 py-2"
+                              disabled={bookingSavingId === booking.id}
+                            >
+                              {bookingSavingId === booking.id && booking.status !== "confirmed"
+                                ? "Saving..."
+                                : "Confirm"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBookingStatus(booking, "pending")}
+                              className="luxury-button luxury-button--ghost px-4 py-2"
+                              disabled={bookingSavingId === booking.id}
+                            >
+                              Set Pending
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBookingDelete(booking.id)}
+                              className="luxury-button px-4 py-2"
+                              disabled={bookingSavingId === booking.id}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                )}
+                {bookingError ? <p className="text-sm text-[#6a6a6a]">{bookingError}</p> : null}
               </div>
             </SectionCard>
           </section>

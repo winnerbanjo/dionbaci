@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { BrandLogo } from "@/components/brand-logo";
 
@@ -29,6 +29,28 @@ export function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearCloseTimer = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  const openMore = () => {
+    clearCloseTimer();
+    setMoreOpen(true);
+  };
+
+  const closeMoreWithDelay = () => {
+    clearCloseTimer();
+    closeTimer.current = setTimeout(() => {
+      setMoreOpen(false);
+    }, 240);
+  };
+
+  useEffect(() => () => clearCloseTimer(), []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/95 backdrop-blur">
@@ -57,36 +79,47 @@ export function Navbar() {
 
           <div
             className="relative"
-            onMouseEnter={() => setMoreOpen(true)}
-            onMouseLeave={() => setMoreOpen(false)}
+            onMouseEnter={openMore}
+            onMouseLeave={closeMoreWithDelay}
           >
             <button
               type="button"
-              className="text-[11px] uppercase tracking-[0.24em] text-mist hover:text-ink"
-              onClick={() => setMoreOpen((value) => !value)}
+              className="text-[11px] uppercase tracking-[0.24em] text-mist transition-colors hover:text-ink"
+              onClick={() => {
+                clearCloseTimer();
+                setMoreOpen((value) => !value);
+              }}
+              aria-expanded={moreOpen}
             >
               More
             </button>
-            {moreOpen ? (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-0 top-full mt-4 w-64 border border-line bg-paper p-4 shadow-card"
-              >
-                <div className="flex flex-col gap-2">
-                  {secondaryNav.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="px-3 py-3 text-xs uppercase tracking-[0.22em] text-mist hover:bg-[#fafafa] hover:text-ink"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </motion.div>
-            ) : null}
+
+            <AnimatePresence>
+              {moreOpen ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  onMouseEnter={openMore}
+                  onMouseLeave={closeMoreWithDelay}
+                  className="absolute right-0 top-full z-50 mt-4 w-64 rounded-md border border-line bg-white p-4 shadow-lg"
+                >
+                  <div className="flex flex-col gap-2">
+                    {secondaryNav.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMoreOpen(false)}
+                        className="translate-y-0 px-3 py-3 text-xs uppercase tracking-[0.22em] text-mist transition-all duration-200 ease-in-out hover:bg-[#fafafa] hover:text-ink"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
         </nav>
 

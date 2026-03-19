@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
+import { EmailPopup } from "@/components/email-popup";
 import { NewsletterSection } from "@/components/newsletter-section";
 import { Footer } from "@/components/ui/Footer";
 import { Navbar } from "@/components/ui/Navbar";
@@ -20,6 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <>
       <Navbar />
       <main>{children}</main>
+      <EmailPopup />
       <NewsletterSection />
       <Footer />
       <WhatsAppButton />
