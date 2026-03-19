@@ -1,0 +1,7 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" fill="#FBFAF8"/>
+  <rect x="80" y="80" width="1040" height="1340" stroke="#E3E3E3"/>
+  <path d="M378 1140C378 874 474 688 600 688C726 688 822 874 822 1140H378Z" fill="#DAD2C8"/>
+  <circle cx="600" cy="566" r="142" fill="#ECE6DE"/>
+  <text x="120" y="1344" fill="#111111" font-family="Georgia, serif" font-size="36" letter-spacing="8">BESPOKE FORM</text>
+</svg>

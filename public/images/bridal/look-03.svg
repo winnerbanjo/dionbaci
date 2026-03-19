@@ -1,0 +1,7 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" fill="#FBFBFA"/>
+  <rect x="90" y="90" width="1020" height="1320" stroke="#E1E1E1"/>
+  <path d="M705 342C705 279 657 234 596 234C535 234 487 279 487 342C487 405 535 448 596 448C657 448 705 405 705 342Z" fill="#E7E2DB"/>
+  <path d="M888 835C888 632 758 496 594 496C430 496 300 632 300 835V1266H888V835Z" fill="#DDD5CC"/>
+  <text x="120" y="1346" fill="#111111" font-family="Georgia, serif" font-size="36" letter-spacing="8">BRIDAL LOOK III</text>
+</svg>

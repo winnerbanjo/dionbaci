@@ -1,0 +1,7 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" fill="#FAFAF8"/>
+  <rect x="80" y="80" width="1040" height="1340" stroke="#E3E3E3"/>
+  <path d="M366 290H834V1182H366V290Z" fill="#DED7CE"/>
+  <path d="M506 214H694V290H506V214Z" fill="#EAE4DC"/>
+  <text x="120" y="1344" fill="#111111" font-family="Georgia, serif" font-size="36" letter-spacing="8">COLLECTION II</text>
+</svg>

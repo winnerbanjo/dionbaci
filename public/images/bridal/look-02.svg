@@ -1,0 +1,8 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" fill="#F8F7F4"/>
+  <rect x="90" y="90" width="1020" height="1320" stroke="#E1E1E1"/>
+  <path d="M690 350C690 288 642 246 582 246C522 246 478 288 478 350C478 412 522 454 582 454C642 454 690 412 690 350Z" fill="#E9E2D9"/>
+  <path d="M790 784C790 634 708 520 586 520C464 520 382 634 382 784V1240H790V784Z" fill="#E2D9CF"/>
+  <path d="M950 860L790 740V1240H950V860Z" fill="#EFEAE3"/>
+  <text x="120" y="1346" fill="#111111" font-family="Georgia, serif" font-size="36" letter-spacing="8">BRIDAL LOOK II</text>
+</svg>

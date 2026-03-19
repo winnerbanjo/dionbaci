@@ -1,0 +1,7 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" fill="#FBFBFA"/>
+  <rect x="80" y="80" width="1040" height="1340" stroke="#E3E3E3"/>
+  <path d="M360 930C360 736 468 568 600 568C732 568 840 736 840 930" stroke="#D8D0C5" stroke-width="48"/>
+  <circle cx="600" cy="488" r="112" fill="#ECE5DD"/>
+  <text x="120" y="1344" fill="#111111" font-family="Georgia, serif" font-size="36" letter-spacing="8">ACCESSORY II</text>
+</svg>

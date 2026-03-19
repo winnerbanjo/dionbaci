@@ -1,0 +1,7 @@
+<svg width="1200" height="1500" viewBox="0 0 1200 1500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1500" fill="#F9F9F8"/>
+  <rect x="80" y="80" width="1040" height="1340" stroke="#E3E3E3"/>
+  <path d="M470 322C470 264 514 220 572 220H628C686 220 730 264 730 322V404H470V322Z" fill="#E9E3DB"/>
+  <rect x="420" y="404" width="360" height="802" fill="#D7D0C6"/>
+  <text x="120" y="1344" fill="#111111" font-family="Georgia, serif" font-size="36" letter-spacing="8">ATELIER WOMEN</text>
+</svg>
