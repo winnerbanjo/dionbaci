@@ -25,10 +25,19 @@ export function BeautyGrid({ items }: BeautyGridProps) {
   return (
     <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-3 2xl:grid-cols-4">
       {items.map((item, index) => (
-        <FadeIn key={item.slug} delay={index * 0.04} className="bg-paper p-4 sm:px-4 sm:py-6">
-          <div className="flex h-full flex-col gap-y-3">
-            <AnimatedImage src={item.image} alt={item.name} aspect="portrait" />
-            <div className="flex min-h-[7rem] flex-1 flex-col justify-start gap-y-2">
+        <FadeIn
+          key={item.slug}
+          delay={index * 0.04}
+          className="bg-paper p-4 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-lg sm:px-4 sm:py-6"
+        >
+          <div className="flex h-full flex-col gap-2">
+            <AnimatedImage
+              src={item.image}
+              alt={item.name}
+              aspect="portrait"
+              className="transition-all duration-300 ease-in-out hover:shadow-lg"
+            />
+            <div className="flex min-h-[5.5rem] flex-1 flex-col justify-start gap-2">
               <h3 className="text-base leading-tight sm:text-xl">{item.name}</h3>
               <p className="text-[10px] uppercase tracking-[0.22em] text-mist sm:text-[11px]">
                 {item.category}
@@ -38,7 +47,7 @@ export function BeautyGrid({ items }: BeautyGridProps) {
               href={getOrderHref(item.name)}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-11 w-full items-center justify-center bg-black px-4 py-3 text-center text-[11px] uppercase tracking-[0.18em] text-white transition-all duration-500 ease-out hover:-translate-y-0.5 hover:opacity-90 sm:w-auto"
+              className="inline-flex min-h-11 w-full items-center justify-center bg-black px-4 py-2 text-center text-[11px] uppercase tracking-[0.18em] text-white transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:opacity-90"
             >
               Order Now
             </Link>

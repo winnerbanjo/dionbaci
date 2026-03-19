@@ -110,13 +110,18 @@ export function Navbar() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-50 lg:hidden"
           >
-            <div className="absolute inset-0 bg-black/25" />
+            <button
+              type="button"
+              aria-label="Close menu overlay"
+              className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+              onClick={() => setMenuOpen(false)}
+            />
             <motion.nav
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 40 }}
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className="relative ml-auto flex min-h-screen w-full max-w-[88vw] flex-col justify-between border-l border-line bg-paper px-6 py-8"
+              className="relative ml-auto flex min-h-screen w-full max-w-[88vw] flex-col justify-between border-l border-line bg-paper px-6 py-8 shadow-2xl"
             >
               <div>
                 <div className="flex items-center justify-between">

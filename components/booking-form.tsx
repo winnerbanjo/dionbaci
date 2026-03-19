@@ -31,13 +31,6 @@ const consultationTypes = [
   "Physical (Chevron, Lekki, Lagos)",
 ];
 
-const pricing = [
-  { title: "Bridal Bespoke", price: "₦80,000", duration: "60–90 mins" },
-  { title: "Bridal Custom", price: "₦50,000", duration: "Custom session" },
-  { title: "Bespoke Occasion", price: "₦50,000", duration: "45–60 mins" },
-  { title: "Custom / Made-to-order", price: "₦35,000", duration: "30–45 mins" },
-];
-
 function formatDate(date: Date) {
   return `${dayNames[date.getDay()]}, ${monthNames[date.getMonth()]} ${date.getDate()}`;
 }
@@ -59,17 +52,36 @@ function getAvailableDates() {
 
 type BookingFormProps = {
   selectedLook?: SelectedLook;
+  fees: {
+    bridalFee: number;
+    bespokeFee: number;
+    customFee: number;
+  };
 };
 
-export function BookingForm({ selectedLook }: BookingFormProps) {
+function formatPrice(value: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+export function BookingForm({ selectedLook, fees }: BookingFormProps) {
   const availableDates = useMemo(() => getAvailableDates(), []);
   const [selectedDate, setSelectedDate] = useState(formatDate(availableDates[0]));
   const [selectedTime, setSelectedTime] = useState(timeSlots[0]);
   const [selectedType, setSelectedType] = useState(consultationTypes[0]);
+  const pricing = [
+    { title: "Bridal Bespoke", price: formatPrice(fees.bridalFee), duration: "60–90 mins" },
+    { title: "Bridal Custom", price: formatPrice(fees.bespokeFee), duration: "Custom session" },
+    { title: "Bespoke Occasion", price: formatPrice(fees.bespokeFee), duration: "45–60 mins" },
+    { title: "Custom / Made-to-order", price: formatPrice(fees.customFee), duration: "30–45 mins" },
+  ];
 
   return (
     <div className="grid gap-px bg-line lg:grid-cols-[1.15fr_0.85fr]">
-      <div className="space-y-12 bg-paper p-6 sm:p-10 lg:p-14">
+      <div className="space-y-10 bg-paper p-6 sm:p-8 lg:p-12">
         {selectedLook ? (
           <div className="border border-line p-5 sm:p-6">
             <p className="eyebrow">{selectedLook.category}</p>
@@ -153,7 +165,7 @@ export function BookingForm({ selectedLook }: BookingFormProps) {
         </div>
       </div>
 
-      <aside className="space-y-10 bg-paper p-6 sm:p-10 lg:p-14">
+      <aside className="space-y-8 bg-paper p-6 sm:p-8 lg:p-12">
         <div className="space-y-4 border-b border-line pb-8">
           <p className="eyebrow">Booking Summary</p>
           <div className="space-y-4 text-sm leading-7 text-mist">

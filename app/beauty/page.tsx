@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { BeautyGrid } from "@/components/beauty-grid";
 import { PageHero } from "@/components/page-hero";
 import { Section } from "@/components/ui/Section";
@@ -14,7 +17,7 @@ export default async function BeautyPage() {
           title="A considered beauty edit for modern ritual."
           description="Discover a refined collection of body and hair essentials presented with the same clarity, restraint, and premium finish as the house."
         />
-        <div className="page-shell p-10 text-center">
+        <div className="page-shell p-8 text-center">
           <p>No items available yet</p>
         </div>
       </>

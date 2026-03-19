@@ -2,18 +2,11 @@ import { NextResponse } from "next/server";
 
 import { createItemSlug } from "@/lib/looks";
 import { prisma } from "@/lib/prisma";
+import { getAllItems } from "@/lib/looks";
 
 export async function GET() {
   try {
-    const items = await prisma.item.findMany({
-      select: {
-        id: true,
-        name: true,
-        image: true,
-        category: true,
-        type: true,
-      },
-    });
+    const items = await getAllItems();
 
     return NextResponse.json({ items });
   } catch (error) {
