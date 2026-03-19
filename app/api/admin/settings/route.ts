@@ -10,12 +10,18 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json();
   const settings = {
-    bridal_fee: String(body?.settings?.bridal_fee ?? "").trim(),
-    bespoke_fee: String(body?.settings?.bespoke_fee ?? "").trim(),
+    bridal_bespoke_fee: String(body?.settings?.bridal_bespoke_fee ?? "").trim(),
+    bridal_customization_fee: String(body?.settings?.bridal_customization_fee ?? "").trim(),
+    eveningwear_bespoke_fee: String(body?.settings?.eveningwear_bespoke_fee ?? "").trim(),
     custom_fee: String(body?.settings?.custom_fee ?? "").trim(),
   };
 
-  if (!settings.bridal_fee || !settings.bespoke_fee || !settings.custom_fee) {
+  if (
+    !settings.bridal_bespoke_fee ||
+    !settings.bridal_customization_fee ||
+    !settings.eveningwear_bespoke_fee ||
+    !settings.custom_fee
+  ) {
     return NextResponse.json({ error: "Missing settings values" }, { status: 400 });
   }
 

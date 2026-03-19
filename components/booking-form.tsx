@@ -53,8 +53,9 @@ function getAvailableDates() {
 type BookingFormProps = {
   selectedLook?: SelectedLook;
   fees: {
-    bridalFee: number;
-    bespokeFee: number;
+    bridalBespokeFee: number;
+    bridalCustomizationFee: number;
+    eveningwearBespokeFee: number;
     customFee: number;
   };
 };
@@ -73,9 +74,21 @@ export function BookingForm({ selectedLook, fees }: BookingFormProps) {
   const [selectedTime, setSelectedTime] = useState(timeSlots[0]);
   const [selectedType, setSelectedType] = useState(consultationTypes[0]);
   const pricing = [
-    { title: "Bridal Bespoke", price: formatPrice(fees.bridalFee), duration: "60–90 mins" },
-    { title: "Bridal Custom", price: formatPrice(fees.bespokeFee), duration: "Custom session" },
-    { title: "Bespoke Occasion", price: formatPrice(fees.bespokeFee), duration: "45–60 mins" },
+    {
+      title: "Bridal Couture / Bespoke consultation",
+      price: formatPrice(fees.bridalBespokeFee),
+      duration: "Design from scratch",
+    },
+    {
+      title: "Bridal customization consultation",
+      price: formatPrice(fees.bridalCustomizationFee),
+      duration: "Adapting an existing design",
+    },
+    {
+      title: "Eveningwear Bespoke consultation",
+      price: formatPrice(fees.eveningwearBespokeFee),
+      duration: "Eveningwear commission",
+    },
     { title: "Custom / Made-to-order", price: formatPrice(fees.customFee), duration: "30–45 mins" },
   ];
 

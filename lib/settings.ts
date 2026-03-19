@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
 const defaultSettings = {
-  bridal_fee: "80000",
-  bespoke_fee: "50000",
-  custom_fee: "35000",
+  bridal_bespoke_fee: "500000",
+  bridal_customization_fee: "400000",
+  eveningwear_bespoke_fee: "200000",
+  custom_fee: "120000",
 };
 
 type SettingRow = {
@@ -42,7 +43,10 @@ export async function getConsultationSettings() {
 }
 
 export async function saveConsultationSettings(
-  settings: Record<"bridal_fee" | "bespoke_fee" | "custom_fee", string>
+  settings: Record<
+    "bridal_bespoke_fee" | "bridal_customization_fee" | "eveningwear_bespoke_fee" | "custom_fee",
+    string
+  >
 ) {
   try {
     const entries = Object.entries(settings) as Array<[keyof typeof defaultSettings, string]>;
@@ -68,8 +72,9 @@ export async function getConsultationFees() {
   const settings = await getConsultationSettings();
 
   return {
-    bridalFee: Number(settings.bridal_fee) || 80000,
-    bespokeFee: Number(settings.bespoke_fee) || 50000,
-    customFee: Number(settings.custom_fee) || 35000,
+    bridalBespokeFee: Number(settings.bridal_bespoke_fee) || 500000,
+    bridalCustomizationFee: Number(settings.bridal_customization_fee) || 400000,
+    eveningwearBespokeFee: Number(settings.eveningwear_bespoke_fee) || 200000,
+    customFee: Number(settings.custom_fee) || 120000,
   };
 }

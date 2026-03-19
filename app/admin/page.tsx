@@ -15,8 +15,9 @@ type Look = {
 };
 
 type SettingsForm = {
-  bridal_fee: string;
-  bespoke_fee: string;
+  bridal_bespoke_fee: string;
+  bridal_customization_fee: string;
+  eveningwear_bespoke_fee: string;
   custom_fee: string;
 };
 
@@ -28,6 +29,8 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [itemSavingId, setItemSavingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     image: "",
@@ -35,9 +38,10 @@ export default function AdminPage() {
     type: "look" as "look" | "beauty",
   });
   const [settings, setSettings] = useState<SettingsForm>({
-    bridal_fee: "80000",
-    bespoke_fee: "50000",
-    custom_fee: "35000",
+    bridal_bespoke_fee: "500000",
+    bridal_customization_fee: "400000",
+    eveningwear_bespoke_fee: "200000",
+    custom_fee: "120000",
   });
 
   useEffect(() => {
@@ -115,6 +119,42 @@ export default function AdminPage() {
   const logout = () => {
     localStorage.removeItem("admin-auth");
     router.push("/admin/login");
+  };
+
+  const handleItemUpdate = async (look: Look) => {
+    setItemSavingId(look.id);
+
+    const response = await fetch(`/api/admin/items/${look.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(look),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      alert(data?.error ?? "Unable to update item");
+      setItemSavingId(null);
+      return;
+    }
+
+    setEditingId(null);
+    setItemSavingId(null);
+  };
+
+  const handleItemDelete = async (id: string) => {
+    const response = await fetch(`/api/admin/items/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      alert(data?.error ?? "Unable to delete item");
+      return;
+    }
+
+    setLooks((current) => current.filter((look) => look.id !== id));
   };
 
   const handleSettingsSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -225,25 +265,36 @@ export default function AdminPage() {
             <section className="border border-line bg-paper p-8 shadow-card sm:p-10">
               <p className="eyebrow">Consultation Fees</p>
               <h2 className="mt-3 text-3xl">Edit booking fees</h2>
-              <form onSubmit={handleSettingsSubmit} className="mt-8 grid gap-5 sm:grid-cols-3">
+              <form onSubmit={handleSettingsSubmit} className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Bridal Fee</span>
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Bridal Bespoke</span>
                   <input
                     type="number"
-                    value={settings.bridal_fee}
+                    value={settings.bridal_bespoke_fee}
                     onChange={(event) =>
-                      setSettings((current) => ({ ...current, bridal_fee: event.target.value }))
+                      setSettings((current) => ({ ...current, bridal_bespoke_fee: event.target.value }))
                     }
                     className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Bespoke Fee</span>
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Bridal Customization</span>
                   <input
                     type="number"
-                    value={settings.bespoke_fee}
+                    value={settings.bridal_customization_fee}
                     onChange={(event) =>
-                      setSettings((current) => ({ ...current, bespoke_fee: event.target.value }))
+                      setSettings((current) => ({ ...current, bridal_customization_fee: event.target.value }))
+                    }
+                    className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Eveningwear Bespoke</span>
+                  <input
+                    type="number"
+                    value={settings.eveningwear_bespoke_fee}
+                    onChange={(event) =>
+                      setSettings((current) => ({ ...current, eveningwear_bespoke_fee: event.target.value }))
                     }
                     className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
                   />
@@ -259,7 +310,7 @@ export default function AdminPage() {
                     className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
                   />
                 </label>
-                <div className="sm:col-span-3 flex flex-wrap items-center gap-4">
+                <div className="sm:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-4">
                   <button type="submit" className="luxury-button" disabled={settingsSaving}>
                     {settingsSaving ? "Saving..." : "Save Fees"}
                   </button>
@@ -280,10 +331,107 @@ export default function AdminPage() {
                   looks.map((look) => (
                     <div key={look.id} className="bg-paper p-6">
                       <p className="eyebrow">{look.category}</p>
-                      <h3 className="mt-4 text-2xl leading-tight">{look.name}</h3>
-                      <p className="mt-3 text-xs uppercase tracking-[0.18em] text-ink">{look.type}</p>
-                      <p className="mt-3 break-all text-sm leading-7 text-mist">{look.image}</p>
-                      <p className="mt-3 text-xs uppercase tracking-[0.18em] text-mist">{look.slug}</p>
+                      {editingId === look.id ? (
+                        <div className="mt-4 space-y-3">
+                          <input
+                            type="text"
+                            value={look.name}
+                            onChange={(event) =>
+                              setLooks((current) =>
+                                current.map((item) =>
+                                  item.id === look.id ? { ...item, name: event.target.value } : item
+                                )
+                              )
+                            }
+                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                          />
+                          <input
+                            type="text"
+                            value={look.image}
+                            onChange={(event) =>
+                              setLooks((current) =>
+                                current.map((item) =>
+                                  item.id === look.id ? { ...item, image: event.target.value } : item
+                                )
+                              )
+                            }
+                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                          />
+                          <input
+                            type="text"
+                            value={look.category}
+                            onChange={(event) =>
+                              setLooks((current) =>
+                                current.map((item) =>
+                                  item.id === look.id ? { ...item, category: event.target.value } : item
+                                )
+                              )
+                            }
+                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                          />
+                          <select
+                            value={look.type}
+                            onChange={(event) =>
+                              setLooks((current) =>
+                                current.map((item) =>
+                                  item.id === look.id
+                                    ? { ...item, type: event.target.value as "look" | "beauty" }
+                                    : item
+                                )
+                              )
+                            }
+                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                          >
+                            <option value="look">Look</option>
+                            <option value="beauty">Beauty</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="mt-4 text-2xl leading-tight">{look.name}</h3>
+                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-ink">{look.type}</p>
+                          <p className="mt-3 break-all text-sm leading-7 text-mist">{look.image}</p>
+                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-mist">{look.slug}</p>
+                        </>
+                      )}
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        {editingId === look.id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleItemUpdate(look)}
+                              className="luxury-button px-4 py-2"
+                              disabled={itemSavingId === look.id}
+                            >
+                              {itemSavingId === look.id ? "Saving..." : "Save"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(null)}
+                              className="luxury-button luxury-button--ghost px-4 py-2"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(look.id)}
+                              className="luxury-button luxury-button--ghost px-4 py-2"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleItemDelete(look.id)}
+                              className="luxury-button px-4 py-2"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}

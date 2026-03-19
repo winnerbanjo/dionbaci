@@ -4,10 +4,10 @@ export const revalidate = 0;
 import { BeautyGrid } from "@/components/beauty-grid";
 import { PageHero } from "@/components/page-hero";
 import { Section } from "@/components/ui/Section";
-import { fallbackBeautyItems } from "@/data/shop";
+import { getItemsByType } from "@/lib/looks";
 
 export default async function BeautyPage() {
-  const products = fallbackBeautyItems;
+  const products = await getItemsByType("beauty");
 
   if (!products || products.length === 0) {
     return (
