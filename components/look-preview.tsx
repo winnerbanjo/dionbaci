@@ -8,11 +8,13 @@ type LookPreviewProps = {
 };
 
 export function LookPreview({ item }: LookPreviewProps) {
+  const safeImage = item.image || "/images/fallback.jpg";
+
   return (
     <section className="section-space border-b border-line">
       <div className="page-shell grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
         <div className="relative aspect-[4/5] overflow-hidden bg-[#f7f7f5]">
-          <Image src={item.image} alt={item.name} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 40vw" />
+          <Image src={safeImage} alt={item.name} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 40vw" />
         </div>
         <div className="max-w-2xl space-y-6">
           <p className="eyebrow">{item.category}</p>

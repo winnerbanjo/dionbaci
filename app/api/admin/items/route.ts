@@ -6,13 +6,18 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const items = await prisma.item.findMany({
-      orderBy: {
-        createdAt: "desc",
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        category: true,
+        type: true,
       },
     });
 
     return NextResponse.json({ items });
-  } catch {
+  } catch (error) {
+    console.error("DATABASE ERROR:", error);
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
   }
 }
@@ -22,7 +27,7 @@ export async function POST(request: Request) {
   const name = String(body.name ?? "").trim();
   const image = String(body.image ?? "").trim();
   const category = String(body.category ?? "").trim();
-  const type = String(body.type ?? "").trim();
+  const type = String(body.type ?? "").trim().toLowerCase();
 
   if (!name || !image || !category || !type) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -48,7 +53,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ item });
-  } catch {
+  } catch (error) {
+    console.error("DATABASE ERROR:", error);
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
   }
 }

@@ -19,12 +19,14 @@ export default async function LookDetailPage({ params }: LookDetailPageProps) {
     notFound();
   }
 
+  const safeImage = look.image || "/images/fallback.jpg";
+
   return (
     <section className="section-space">
       <div className="page-shell grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
         <FadeIn>
           <div className="relative aspect-[4/5] overflow-hidden bg-[#f7f7f5]">
-            <Image src={look.image} alt={look.name} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 56vw" />
+            <Image src={safeImage} alt={look.name} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 56vw" />
           </div>
         </FadeIn>
         <FadeIn className="max-w-2xl space-y-6 lg:pt-8">

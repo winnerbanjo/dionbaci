@@ -8,6 +8,22 @@ import { getItemsByType } from "@/lib/looks";
 export default async function BeautyPage() {
   const products = await getItemsByType("beauty");
 
+  if (!products || products.length === 0) {
+    return (
+      <>
+        <PageHero
+          eyebrow="Beauty"
+          title="Beauty rituals shaped with the same restraint as the atelier."
+          description="Discover a considered edit of beauty essentials curated to extend the Dion Baci world beyond fashion."
+          primaryCta={{ label: "Book Consultation", href: "/book-consultation" }}
+        />
+        <div className="page-shell p-10 text-center">
+          <p>No items available yet</p>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <PageHero

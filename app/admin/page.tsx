@@ -67,7 +67,10 @@ export default function AdminPage() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        type: form.type.toLowerCase(),
+      }),
     });
 
     if (!response.ok) {

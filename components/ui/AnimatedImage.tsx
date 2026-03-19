@@ -11,6 +11,8 @@ type AnimatedImageProps = {
   className?: string;
 };
 
+const FALLBACK_IMAGE = "/images/fallback.jpg";
+
 const aspectClasses = {
   portrait: "aspect-[4/5]",
   landscape: "aspect-[5/4]",
@@ -24,6 +26,8 @@ export function AnimatedImage({
   aspect = "portrait",
   className = "",
 }: AnimatedImageProps) {
+  const safeImage = src || FALLBACK_IMAGE;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 1.04 }}
@@ -34,7 +38,7 @@ export function AnimatedImage({
       className={`group relative overflow-hidden bg-[#f7f7f5] ${aspectClasses[aspect]} ${className}`}
     >
       <Image
-        src={src}
+        src={safeImage}
         alt={alt}
         fill
         priority={priority}

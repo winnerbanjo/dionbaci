@@ -9,6 +9,14 @@ type ShopGridProps = {
 };
 
 export function ShopGrid({ items }: ShopGridProps) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="border border-line bg-paper p-10 text-center text-sm text-mist">
+        No items available yet
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-3 xl:grid-cols-4">
       {items.map((item, index) => (
