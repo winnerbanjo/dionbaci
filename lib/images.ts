@@ -39,13 +39,10 @@ export const images: ImageSet = {
     "/images/shop/shop-look-08.PNG",
   ],
   beauty: [
-    "/images/beauty/beauty-01.PNG",
-    "/images/beauty/beauty-02.PNG",
-    "/images/beauty/beauty-03.PNG",
-    "/images/beauty/beauty-04.PNG",
-    "/images/beauty/beauty-05.PNG",
-    "/images/beauty/beauty-06.PNG",
-    "/images/beauty/beauty-07.PNG",
+    "/images/beauty/IMG_9798.PNG",
+    "/images/beauty/IMG_9799.PNG",
+    "/images/beauty/IMG_9804.PNG",
+    "/images/beauty/IMG_9805.PNG",
   ],
   accessories: [
     "/images/IMG_4373.JPG.jpeg",
