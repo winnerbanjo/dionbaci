@@ -1,11 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand-logo";
 
-type Look = {
+type Item = {
   id: string;
   name: string;
   image: string;
@@ -21,10 +21,51 @@ type SettingsForm = {
   custom_fee: string;
 };
 
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function getUpcomingConsultationDates() {
+  const dates: string[] = [];
+  const cursor = new Date();
+
+  while (dates.length < 6) {
+    const day = cursor.getDay();
+    if (day === 2 || day === 4) {
+      dates.push(`${dayNames[day]}, ${monthNames[cursor.getMonth()]} ${cursor.getDate()}`);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return dates;
+}
+
+function formatNaira(value: string) {
+  const amount = Number(value);
+
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(Number.isFinite(amount) ? amount : 0);
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
-  const [looks, setLooks] = useState<Look[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
@@ -57,20 +98,21 @@ export default function AdminPage() {
   useEffect(() => {
     if (!authorized) return;
 
-    const loadLooks = async () => {
+    const loadDashboard = async () => {
       const [itemsResponse, settingsResponse] = await Promise.all([
         fetch("/api/admin/items", { cache: "no-store" }),
         fetch("/api/admin/settings", { cache: "no-store" }),
       ]);
+
       const itemsData = await itemsResponse.json();
       const settingsData = await settingsResponse.json();
 
       if (!itemsResponse.ok) {
         setError(itemsData.error ?? "Unable to load items");
-        setLooks([]);
+        setItems([]);
       } else {
         setError(null);
-        setLooks(itemsData.items ?? []);
+        setItems(itemsData.items ?? []);
       }
 
       if (!settingsResponse.ok) {
@@ -83,8 +125,12 @@ export default function AdminPage() {
       setLoading(false);
     };
 
-    loadLooks();
+    loadDashboard();
   }, [authorized]);
+
+  const upcomingDates = useMemo(() => getUpcomingConsultationDates(), []);
+  const beautyCount = items.filter((item) => item.type === "beauty").length;
+  const lookCount = items.filter((item) => item.type === "look").length;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,7 +153,9 @@ export default function AdminPage() {
     }
 
     const data = await response.json();
-    setLooks((current) => [data.item, ...current]);
+    if (data.item) {
+      setItems((current) => [data.item, ...current]);
+    }
     setForm({
       name: "",
       image: "",
@@ -116,20 +164,15 @@ export default function AdminPage() {
     });
   };
 
-  const logout = () => {
-    localStorage.removeItem("admin-auth");
-    router.push("/admin/login");
-  };
+  const handleItemUpdate = async (item: Item) => {
+    setItemSavingId(item.id);
 
-  const handleItemUpdate = async (look: Look) => {
-    setItemSavingId(look.id);
-
-    const response = await fetch(`/api/admin/items/${look.id}`, {
+    const response = await fetch(`/api/admin/items/${item.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(look),
+      body: JSON.stringify(item),
     });
 
     if (!response.ok) {
@@ -154,7 +197,7 @@ export default function AdminPage() {
       return;
     }
 
-    setLooks((current) => current.filter((look) => look.id !== id));
+    setItems((current) => current.filter((item) => item.id !== id));
   };
 
   const handleSettingsSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -182,205 +225,221 @@ export default function AdminPage() {
     setSettingsSaving(false);
   };
 
+  const logout = () => {
+    localStorage.removeItem("admin-auth");
+    router.push("/admin/login");
+  };
+
   if (!authorized) {
     return null;
   }
 
   return (
-    <div className="page-shell py-10">
-      <div className="space-y-8">
-        <div className="flex flex-wrap items-start justify-between gap-4 border border-line bg-paper p-10 shadow-card">
-          <div className="space-y-4">
-            <BrandLogo href="" width={240} imageClassName="max-h-10 w-auto" />
-            <div>
-              <h1 className="text-4xl">Admin Dashboard</h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-mist">
-                Add new looks, manage the shop presentation, and keep the consultation funnel current.
+    <div className="min-h-screen bg-[#f5f1ea] text-black">
+      <div className="mx-auto grid min-h-screen max-w-[1800px] lg:grid-cols-[280px_1fr]">
+        <aside className="border-r border-black/10 bg-white px-6 py-8 lg:px-8">
+          <div className="space-y-8">
+            <BrandLogo href="" width={210} imageClassName="max-h-10 w-auto" />
+            <div className="space-y-2">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Studio Dashboard</p>
+              <h1 className="font-serif text-3xl leading-tight">Dion Baci Admin</h1>
+              <p className="text-sm leading-7 text-[#6a6a6a]">
+                Manage products, consultation fees, and the weekly booking rhythm from one place.
               </p>
             </div>
+
+            <div className="grid gap-px border border-black/10 bg-black/10">
+              {[
+                { label: "Total Products", value: String(items.length) },
+                { label: "Beauty Products", value: String(beautyCount) },
+                { label: "Fashion Looks", value: String(lookCount) },
+                { label: "Consultation Days", value: "Tue / Thu" },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white p-5">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-[#6a6a6a]">{stat.label}</p>
+                  <p className="mt-3 font-serif text-3xl">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={logout} className="luxury-button w-full justify-center">
+              Logout
+            </button>
           </div>
-          <button onClick={logout} className="luxury-button luxury-button--ghost">
-            Logout
-          </button>
-        </div>
+        </aside>
 
-        <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
-          <section className="border border-line bg-paper p-8 shadow-card sm:p-10">
-            <p className="eyebrow">Add Item</p>
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-              <label className="block">
-                <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Name</span>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                  className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                  placeholder="Ivory Ceremony Dress"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Image URL</span>
-                <input
-                  type="text"
-                  value={form.image}
-                  onChange={(event) => setForm((current) => ({ ...current, image: event.target.value }))}
-                  className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                  placeholder="/images/IMG_4368.JPG.jpeg or https://..."
-                />
-              </label>
-              <label className="block">
-                <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Category</span>
-                <select
-                  value={form.category}
-                  onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                  className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                >
-                  <option value="Bridal">Bridal</option>
-                  <option value="Collection">Collection</option>
-                  <option value="Atelier">Atelier</option>
-                  <option value="Bespoke">Bespoke</option>
-                  <option value="Custom Piece">Custom Piece</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Type</span>
-                <select
-                  value={form.type}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, type: event.target.value as "look" | "beauty" }))
-                  }
-                  className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                >
-                  <option value="look">Look</option>
-                  <option value="beauty">Beauty</option>
-                </select>
-              </label>
-              <button type="submit" className="luxury-button w-full">
-                Add Item
-              </button>
-            </form>
-          </section>
+        <div className="space-y-8 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+          <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Overview</p>
+              <h2 className="mt-3 font-serif text-4xl leading-tight">Today’s studio view</h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#6a6a6a]">
+                Keep beauty products, fashion pieces, and consultation pricing aligned across the brand.
+              </p>
+              <div className="mt-8 grid gap-px border border-black/10 bg-black/10 sm:grid-cols-2">
+                {upcomingDates.map((date) => (
+                  <div key={date} className="bg-white p-5">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">Consultation Date</p>
+                    <p className="mt-3 text-lg">{date}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[#6a6a6a]">12 PM / 2 PM / 4 PM</p>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <div className="space-y-8">
-            <section className="border border-line bg-paper p-8 shadow-card sm:p-10">
-              <p className="eyebrow">Consultation Fees</p>
-              <h2 className="mt-3 text-3xl">Edit booking fees</h2>
-              <form onSubmit={handleSettingsSubmit} className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Bridal Bespoke</span>
-                  <input
-                    type="number"
-                    value={settings.bridal_bespoke_fee}
-                    onChange={(event) =>
-                      setSettings((current) => ({ ...current, bridal_bespoke_fee: event.target.value }))
-                    }
-                    className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Bridal Customization</span>
-                  <input
-                    type="number"
-                    value={settings.bridal_customization_fee}
-                    onChange={(event) =>
-                      setSettings((current) => ({ ...current, bridal_customization_fee: event.target.value }))
-                    }
-                    className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Eveningwear Bespoke</span>
-                  <input
-                    type="number"
-                    value={settings.eveningwear_bespoke_fee}
-                    onChange={(event) =>
-                      setSettings((current) => ({ ...current, eveningwear_bespoke_fee: event.target.value }))
-                    }
-                    className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-mist">Custom Fee</span>
-                  <input
-                    type="number"
-                    value={settings.custom_fee}
-                    onChange={(event) =>
-                      setSettings((current) => ({ ...current, custom_fee: event.target.value }))
-                    }
-                    className="w-full border border-line px-4 py-4 outline-none focus:border-ink"
-                  />
-                </label>
-                <div className="sm:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-4">
+            <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Consultation Fees</p>
+              <h2 className="mt-3 font-serif text-3xl">Pricing control</h2>
+              <form onSubmit={handleSettingsSubmit} className="mt-8 grid gap-5">
+                {[
+                  ["bridal_bespoke_fee", "Bridal Bespoke"],
+                  ["bridal_customization_fee", "Bridal Customization"],
+                  ["eveningwear_bespoke_fee", "Eveningwear Bespoke"],
+                  ["custom_fee", "Custom / Made-to-order"],
+                ].map(([key, label]) => (
+                  <label key={key} className="block">
+                    <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">{label}</span>
+                    <input
+                      type="number"
+                      value={settings[key as keyof SettingsForm]}
+                      onChange={(event) =>
+                        setSettings((current) => ({ ...current, [key]: event.target.value }))
+                      }
+                      className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
+                    />
+                    <span className="mt-2 block text-xs text-[#6a6a6a]">
+                      {formatNaira(settings[key as keyof SettingsForm])}
+                    </span>
+                  </label>
+                ))}
+                <div className="flex flex-wrap items-center gap-4">
                   <button type="submit" className="luxury-button" disabled={settingsSaving}>
                     {settingsSaving ? "Saving..." : "Save Fees"}
                   </button>
-                  {settingsError ? <p className="text-sm text-mist">{settingsError}</p> : null}
+                  {settingsError ? <p className="text-sm text-[#6a6a6a]">{settingsError}</p> : null}
                 </div>
               </form>
             </section>
+          </section>
 
-            <section className="border border-line bg-paper p-8 shadow-card sm:p-10">
-              <p className="eyebrow">Stored Items</p>
-              <h2 className="mt-3 text-3xl">Current shop and beauty inventory</h2>
-              <div className="mt-8 grid gap-px bg-line sm:grid-cols-2 xl:grid-cols-3">
+          <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+            <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Add Product</p>
+              <h2 className="mt-3 font-serif text-3xl">Create a new item</h2>
+              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Name</span>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
+                    placeholder="Leave-in Creme Conditioner 300ML"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Image URL</span>
+                  <input
+                    type="text"
+                    value={form.image}
+                    onChange={(event) => setForm((current) => ({ ...current, image: event.target.value }))}
+                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
+                    placeholder="/images/beauty/leave-in-creme-conditioner-300ml-tube.PNG"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Category</span>
+                  <input
+                    type="text"
+                    value={form.category}
+                    onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Type</span>
+                  <select
+                    value={form.type}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, type: event.target.value as "look" | "beauty" }))
+                    }
+                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
+                  >
+                    <option value="look">Look</option>
+                    <option value="beauty">Beauty</option>
+                  </select>
+                </label>
+                <button type="submit" className="luxury-button w-full justify-center">
+                  Add Item
+                </button>
+              </form>
+            </section>
+
+            <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Products</p>
+                  <h2 className="mt-3 font-serif text-3xl">Edit or delete items</h2>
+                </div>
+                {error ? <p className="text-sm text-[#6a6a6a]">{error}</p> : null}
+              </div>
+              <div className="mt-8 grid gap-px border border-black/10 bg-black/10 sm:grid-cols-2 xl:grid-cols-3">
                 {loading ? (
-                  <div className="bg-paper p-6 text-sm text-mist">Loading looks...</div>
-                ) : error ? (
-                  <div className="bg-paper p-6 text-sm text-mist">{error}</div>
+                  <div className="bg-white p-6 text-sm text-[#6a6a6a]">Loading items...</div>
                 ) : (
-                  looks.map((look) => (
-                    <div key={look.id} className="bg-paper p-6">
-                      <p className="eyebrow">{look.category}</p>
-                      {editingId === look.id ? (
+                  items.map((item) => (
+                    <div key={item.id} className="bg-white p-6">
+                      <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">{item.category}</p>
+                      {editingId === item.id ? (
                         <div className="mt-4 space-y-3">
                           <input
                             type="text"
-                            value={look.name}
+                            value={item.name}
                             onChange={(event) =>
-                              setLooks((current) =>
-                                current.map((item) =>
-                                  item.id === look.id ? { ...item, name: event.target.value } : item
+                              setItems((current) =>
+                                current.map((entry) =>
+                                  entry.id === item.id ? { ...entry, name: event.target.value } : entry
                                 )
                               )
                             }
-                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
                           />
                           <input
                             type="text"
-                            value={look.image}
+                            value={item.image}
                             onChange={(event) =>
-                              setLooks((current) =>
-                                current.map((item) =>
-                                  item.id === look.id ? { ...item, image: event.target.value } : item
+                              setItems((current) =>
+                                current.map((entry) =>
+                                  entry.id === item.id ? { ...entry, image: event.target.value } : entry
                                 )
                               )
                             }
-                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
                           />
                           <input
                             type="text"
-                            value={look.category}
+                            value={item.category}
                             onChange={(event) =>
-                              setLooks((current) =>
-                                current.map((item) =>
-                                  item.id === look.id ? { ...item, category: event.target.value } : item
+                              setItems((current) =>
+                                current.map((entry) =>
+                                  entry.id === item.id ? { ...entry, category: event.target.value } : entry
                                 )
                               )
                             }
-                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
                           />
                           <select
-                            value={look.type}
+                            value={item.type}
                             onChange={(event) =>
-                              setLooks((current) =>
-                                current.map((item) =>
-                                  item.id === look.id
-                                    ? { ...item, type: event.target.value as "look" | "beauty" }
-                                    : item
+                              setItems((current) =>
+                                current.map((entry) =>
+                                  entry.id === item.id
+                                    ? { ...entry, type: event.target.value as "look" | "beauty" }
+                                    : entry
                                 )
                               )
                             }
-                            className="w-full border border-line px-3 py-3 outline-none focus:border-ink"
+                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
                           >
                             <option value="look">Look</option>
                             <option value="beauty">Beauty</option>
@@ -388,22 +447,22 @@ export default function AdminPage() {
                         </div>
                       ) : (
                         <>
-                          <h3 className="mt-4 text-2xl leading-tight">{look.name}</h3>
-                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-ink">{look.type}</p>
-                          <p className="mt-3 break-all text-sm leading-7 text-mist">{look.image}</p>
-                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-mist">{look.slug}</p>
+                          <h3 className="mt-4 text-2xl leading-tight">{item.name}</h3>
+                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-black">{item.type}</p>
+                          <p className="mt-3 break-all text-sm leading-7 text-[#6a6a6a]">{item.image}</p>
+                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-[#6a6a6a]">{item.slug}</p>
                         </>
                       )}
                       <div className="mt-4 flex flex-wrap gap-3">
-                        {editingId === look.id ? (
+                        {editingId === item.id ? (
                           <>
                             <button
                               type="button"
-                              onClick={() => handleItemUpdate(look)}
+                              onClick={() => handleItemUpdate(item)}
                               className="luxury-button px-4 py-2"
-                              disabled={itemSavingId === look.id}
+                              disabled={itemSavingId === item.id}
                             >
-                              {itemSavingId === look.id ? "Saving..." : "Save"}
+                              {itemSavingId === item.id ? "Saving..." : "Save"}
                             </button>
                             <button
                               type="button"
@@ -417,14 +476,14 @@ export default function AdminPage() {
                           <>
                             <button
                               type="button"
-                              onClick={() => setEditingId(look.id)}
+                              onClick={() => setEditingId(item.id)}
                               className="luxury-button luxury-button--ghost px-4 py-2"
                             >
                               Edit
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleItemDelete(look.id)}
+                              onClick={() => handleItemDelete(item.id)}
                               className="luxury-button px-4 py-2"
                             >
                               Delete
@@ -437,7 +496,7 @@ export default function AdminPage() {
                 )}
               </div>
             </section>
-          </div>
+          </section>
         </div>
       </div>
     </div>

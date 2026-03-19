@@ -4,10 +4,7 @@ import type { ReactNode } from "react";
 
 import "./globals.css";
 
-import { NewsletterSection } from "@/components/newsletter-section";
-import { Footer } from "@/components/ui/Footer";
-import { Navbar } from "@/components/ui/Navbar";
-import { WhatsAppButton } from "@/components/whatsapp-button";
+import { AppShell } from "@/components/app-shell";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,11 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="bg-white font-[var(--font-inter)] text-black antialiased">
-        <Navbar />
-        <main>{children}</main>
-        <NewsletterSection />
-        <Footer />
-        <WhatsAppButton />
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
