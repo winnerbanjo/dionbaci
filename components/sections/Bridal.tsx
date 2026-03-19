@@ -1,38 +1,32 @@
 import Link from "next/link";
 
 import { FadeIn } from "@/components/fade-in";
-import { AnimatedImage } from "@/components/ui/AnimatedImage";
-import { Section } from "@/components/ui/Section";
-import { images } from "@/lib/images";
 
 export function BridalSection() {
   return (
-    <Section
-      id="bridal"
-      eyebrow="Bridal"
-      title="Ceremony couture, handled with restraint."
-      description={
-        <p>
-          The bridal atelier centers on refined fittings, sculpted silhouettes, and an exacting calm that
-          lets craftsmanship carry the emotion.
-        </p>
-      }
-      align="center"
-    >
-      <div className="grid gap-px bg-line md:grid-cols-2">
-        {images.bridalFeature.slice(0, 2).map((src, index) => (
-          <FadeIn key={src} className="bg-paper p-5 sm:p-6 lg:p-8">
-            <div className="space-y-3">
-              <AnimatedImage src={src} alt={`Bridal couture look ${index + 1}`} />
-            </div>
-          </FadeIn>
-        ))}
+    <section id="bridal" className="border-b border-line">
+      <div className="text-center mx-auto max-w-xl px-6 py-24">
+        <FadeIn>
+          <h2 className="text-3xl font-semibold tracking-wide md:text-4xl">Bridal</h2>
+        </FadeIn>
+        <FadeIn delay={0.2}>
+          <p className="mt-4 text-sm leading-relaxed text-gray-600 md:text-base">
+            For moments that demand precision.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-gray-600 md:text-base">
+            Each piece is shaped with intention — refined silhouettes, controlled detail, and a quiet
+            confidence that lets the bride lead the story.
+          </p>
+        </FadeIn>
+        <FadeIn delay={0.3} className="mt-8 flex justify-center">
+          <Link
+            href="/bridal"
+            className="inline-flex items-center justify-center border border-black px-6 py-3 text-sm tracking-wide transition-all duration-300 hover:bg-black hover:text-white"
+          >
+            DISCOVER BRIDAL
+          </Link>
+        </FadeIn>
       </div>
-      <FadeIn className="flex justify-center">
-        <Link href="/bridal" className="luxury-button min-w-[220px] justify-center">
-          DISCOVER BRIDAL
-        </Link>
-      </FadeIn>
-    </Section>
+    </section>
   );
 }
