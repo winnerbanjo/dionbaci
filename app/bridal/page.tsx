@@ -12,26 +12,26 @@ export default function BridalPage() {
       <PageHero
         eyebrow="Bridal"
         title="Bridal couture shaped for lasting memory."
-        description="The bridal atelier focuses on refined fittings, sculpted elegance, and considered detailing for ceremonies of significance."
-        primaryCta={{ label: "Book Bridal Consultation", href: "/book-consultation" }}
-        secondaryCta={{ label: "Book Consultation", href: "/book-consultation" }}
+        description="A focused bridal gallery shaped around ceremony, silhouette, and restraint."
+        primaryCta={{ label: "DISCOVER BRIDAL", href: "/bridal" }}
       />
       <Section
         eyebrow="Selected Bridal"
-        title="A gallery of ceremony, proportion, and detail."
-        description={<p>Each bridal piece is approached as a personal commission, crafted to reflect individual grace with exacting finish.</p>}
+        title="A curated bridal study in proportion, texture, and ceremony."
+        description={<p>The bridal page is reserved for a dedicated visual edit and nothing else.</p>}
+        align="center"
         border={false}
       >
-        <div className="grid gap-px bg-line md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-px bg-line md:grid-cols-2">
           {images.bridal.map((src, index) => (
             <FadeIn key={src} className="bg-paper p-6 sm:p-8">
-              <AnimatedImage src={src} alt={`Bridal gallery look ${index + 1}`} />
+              <AnimatedImage src={src} alt={`Bridal gallery look ${index + 1}`} className="bg-[#f6f3ee]" />
             </FadeIn>
           ))}
         </div>
-        <FadeIn className="flex justify-start">
-          <Link href="/book-consultation" className="luxury-button">
-            Book Consultation
+        <FadeIn className="flex justify-center">
+          <Link href="/bridal" className="luxury-button min-w-[220px] justify-center">
+            DISCOVER BRIDAL
           </Link>
         </FadeIn>
       </Section>

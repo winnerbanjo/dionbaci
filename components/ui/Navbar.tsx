@@ -68,8 +68,8 @@ export function Navbar() {
                   item.href === "/book-consultation"
                     ? "luxury-button px-5 py-3 text-paper"
                     : active
-                      ? "text-ink"
-                      : "text-mist hover:text-ink"
+                      ? "border-b border-black pb-1 text-[15px] font-medium text-ink"
+                      : "text-mist transition-all hover:text-ink"
                 }`}
               >
                 {item.label}

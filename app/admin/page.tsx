@@ -40,6 +40,12 @@ type Booking = {
   createdAt: string;
 };
 
+type Subscriber = {
+  id: string;
+  email: string;
+  createdAt: string;
+};
+
 type SettingsForm = {
   bridal_bespoke_fee: string;
   bridal_customization_fee: string;
@@ -168,9 +174,11 @@ export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [subscriberError, setSubscriberError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -198,15 +206,17 @@ export default function AdminPage() {
     setLoading(true);
 
     try {
-      const [itemsResponse, settingsResponse, bookingsResponse] = await Promise.all([
+      const [itemsResponse, settingsResponse, bookingsResponse, subscribersResponse] = await Promise.all([
         fetch("/api/admin/items", { cache: "no-store" }),
         fetch("/api/admin/settings", { cache: "no-store" }),
         fetch("/api/admin/bookings", { cache: "no-store" }),
+        fetch("/api/admin/subscribers", { cache: "no-store" }),
       ]);
 
       const itemsData = await itemsResponse.json().catch(() => null);
       const settingsData = await settingsResponse.json().catch(() => null);
       const bookingsData = await bookingsResponse.json().catch(() => null);
+      const subscribersData = await subscribersResponse.json().catch(() => null);
 
       if (!itemsResponse.ok) {
         setError(itemsData?.error ?? "Unable to load items");
@@ -230,6 +240,14 @@ export default function AdminPage() {
         setBookingError(null);
         setBookings(bookingsData?.bookings ?? []);
       }
+
+      if (!subscribersResponse.ok) {
+        setSubscriberError(subscribersData?.error ?? "Unable to load subscribers");
+        setSubscribers([]);
+      } else {
+        setSubscriberError(null);
+        setSubscribers(subscribersData?.subscribers ?? []);
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load dashboard");
     } finally {
@@ -252,14 +270,15 @@ export default function AdminPage() {
     () => bookings.filter((booking) => booking.status.toLowerCase() === "pending"),
     [bookings]
   );
+  const recentSubscribers = useMemo(() => subscribers.slice(0, 6), [subscribers]);
 
   const stats = [
     { label: "Total Products", value: String(items.length) },
     { label: "Consultations", value: String(bookings.length) },
+    { label: "Subscribers", value: String(subscribers.length) },
     { label: "Beauty Products", value: String(beautyProducts.length) },
     { label: "Pending", value: String(pendingBookings.length) },
     { label: "Fashion Looks", value: String(looks.length) },
-    { label: "Consultation Days", value: "Tue / Thu" },
   ];
 
   const handleCreateItem = async (event: FormEvent<HTMLFormElement>) => {
@@ -431,6 +450,21 @@ export default function AdminPage() {
     setBookingSavingId(null);
   };
 
+  const handleSubscriberDelete = async (id: string) => {
+    const response = await fetch(`/api/admin/subscribers/${id}`, {
+      method: "DELETE",
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setSubscriberError(data?.error ?? "Unable to delete subscriber");
+      return;
+    }
+
+    setSubscribers((current) => current.filter((subscriber) => subscriber.id !== id));
+  };
+
   const logout = () => {
     localStorage.removeItem("admin-auth");
     router.push("/admin/login");
@@ -456,7 +490,7 @@ export default function AdminPage() {
 
             <nav className="grid gap-2 text-sm text-white/70">
               <a href="#dashboard" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Dashboard Overview
+                Dashboard
               </a>
               <a href="#looks" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
                 Products
@@ -464,11 +498,14 @@ export default function AdminPage() {
               <a href="#beauty" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
                 Beauty Products
               </a>
-              <a href="#settings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
-                Consultation Settings
-              </a>
               <a href="#bookings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
                 Bookings
+              </a>
+              <a href="#subscribers" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Subscribers
+              </a>
+              <a href="#settings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Settings
               </a>
             </nav>
 
@@ -506,7 +543,36 @@ export default function AdminPage() {
             </SectionCard>
 
             <SectionCard
-              eyebrow="Product Intake"
+              eyebrow="Live Signals"
+              title="Audience and booking pulse"
+              description="A compact view of current consultation demand and subscriber growth."
+            >
+              <div className="grid gap-px border border-black/10 bg-black/10 sm:grid-cols-2">
+                <div className="bg-white p-5">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">Recent Subscribers</p>
+                  <p className="mt-3 font-serif text-3xl">{subscribers.length}</p>
+                  <div className="mt-4 space-y-2 text-sm leading-6 text-[#6a6a6a]">
+                    {recentSubscribers.length ? recentSubscribers.map((subscriber) => (
+                      <p key={subscriber.id} className="truncate">{subscriber.email}</p>
+                    )) : <p>No subscribers yet.</p>}
+                  </div>
+                </div>
+                <div className="bg-white p-5">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">Pending Consultations</p>
+                  <p className="mt-3 font-serif text-3xl">{pendingBookings.length}</p>
+                  <div className="mt-4 space-y-2 text-sm leading-6 text-[#6a6a6a]">
+                    {pendingBookings.slice(0, 4).length ? pendingBookings.slice(0, 4).map((booking) => (
+                      <p key={booking.id}>{booking.name} • {booking.date}</p>
+                    )) : <p>No pending requests.</p>}
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <SectionCard
+              eyebrow="Products"
               title="Add a new product"
               description="Upload the asset, define the product type, and send it straight into the live catalog."
             >
@@ -583,9 +649,7 @@ export default function AdminPage() {
                 </button>
               </form>
             </SectionCard>
-          </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
             <SectionCard
               eyebrow="Consultation Settings"
               title="Pricing control"
@@ -621,96 +685,136 @@ export default function AdminPage() {
                 </div>
               </form>
             </SectionCard>
-
-            <SectionCard
-              eyebrow="Bookings"
-              title="Consultation requests"
-              description="Track new consultation requests, review payment proof, and confirm appointments from one place."
-            >
-              <div id="bookings" className="grid gap-4">
-                {bookings.length === 0 ? (
-                  <div className="border border-dashed border-black/15 bg-[#faf8f3] p-6 text-sm leading-7 text-[#6a6a6a]">
-                    No bookings submitted yet.
-                  </div>
-                ) : (
-                  bookings.map((booking) => (
-                    <article key={booking.id} className="border border-black/10 bg-[#fcfbf8] p-5">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">
-                            {booking.status}
-                          </p>
-                          <h3 className="font-serif text-2xl leading-tight">{booking.name}</h3>
-                          <p className="text-sm leading-7 text-[#6a6a6a]">
-                            {booking.service} • {booking.type}
-                          </p>
-                        </div>
-                        <div className="text-right text-sm leading-7 text-[#6a6a6a]">
-                          <p>{booking.date}</p>
-                          <p>{booking.time}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                        <div className="grid gap-2 text-sm leading-7 text-[#6a6a6a]">
-                          <p><span className="text-black">Email:</span> {booking.email}</p>
-                          <p><span className="text-black">Phone:</span> {booking.phone}</p>
-                          {booking.notes ? (
-                            <p><span className="text-black">Notes:</span> {booking.notes}</p>
-                          ) : null}
-                        </div>
-                        <div className="grid gap-3">
-                          {booking.paymentProof ? (
-                            <a
-                              href={booking.paymentProof}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="luxury-button luxury-button--ghost justify-center"
-                            >
-                              View Receipt
-                            </a>
-                          ) : (
-                            <div className="border border-dashed border-black/15 px-4 py-3 text-sm text-[#6a6a6a]">
-                              No receipt uploaded
-                            </div>
-                          )}
-                          <div className="flex flex-wrap gap-3">
-                            <button
-                              type="button"
-                              onClick={() => handleBookingStatus(booking, "confirmed")}
-                              className="luxury-button px-4 py-2"
-                              disabled={bookingSavingId === booking.id}
-                            >
-                              {bookingSavingId === booking.id && booking.status !== "confirmed"
-                                ? "Saving..."
-                                : "Confirm"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleBookingStatus(booking, "pending")}
-                              className="luxury-button luxury-button--ghost px-4 py-2"
-                              disabled={bookingSavingId === booking.id}
-                            >
-                              Set Pending
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleBookingDelete(booking.id)}
-                              className="luxury-button px-4 py-2"
-                              disabled={bookingSavingId === booking.id}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  ))
-                )}
-                {bookingError ? <p className="text-sm text-[#6a6a6a]">{bookingError}</p> : null}
-              </div>
-            </SectionCard>
           </section>
+
+          <SectionCard
+            eyebrow="Bookings"
+            title="Consultation requests"
+            description="Track new consultation requests, review payment proof, and confirm appointments from one place."
+          >
+            <div id="bookings" className="grid gap-4">
+              {bookings.length === 0 ? (
+                <div className="border border-dashed border-black/15 bg-[#faf8f3] p-6 text-sm leading-7 text-[#6a6a6a]">
+                  No bookings submitted yet.
+                </div>
+              ) : (
+                bookings.map((booking) => (
+                  <article key={booking.id} className="border border-black/10 bg-[#fcfbf8] p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="space-y-2">
+                        <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">
+                          {booking.status}
+                        </p>
+                        <h3 className="font-serif text-2xl leading-tight">{booking.name}</h3>
+                        <p className="text-sm leading-7 text-[#6a6a6a]">
+                          {booking.service} • {booking.type}
+                        </p>
+                      </div>
+                      <div className="text-right text-sm leading-7 text-[#6a6a6a]">
+                        <p>{booking.date}</p>
+                        <p>{booking.time}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                      <div className="grid gap-2 text-sm leading-7 text-[#6a6a6a]">
+                        <p><span className="text-black">Email:</span> {booking.email}</p>
+                        <p><span className="text-black">Phone:</span> {booking.phone}</p>
+                        {booking.notes ? (
+                          <p><span className="text-black">Notes:</span> {booking.notes}</p>
+                        ) : null}
+                      </div>
+                      <div className="grid gap-3">
+                        {booking.paymentProof ? (
+                          <a
+                            href={booking.paymentProof}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="luxury-button luxury-button--ghost justify-center"
+                          >
+                            View Receipt
+                          </a>
+                        ) : (
+                          <div className="border border-dashed border-black/15 px-4 py-3 text-sm text-[#6a6a6a]">
+                            No receipt uploaded
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleBookingStatus(booking, "confirmed")}
+                            className="luxury-button px-4 py-2"
+                            disabled={bookingSavingId === booking.id}
+                          >
+                            {bookingSavingId === booking.id && booking.status !== "confirmed"
+                              ? "Saving..."
+                              : "Confirm"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleBookingStatus(booking, "pending")}
+                            className="luxury-button luxury-button--ghost px-4 py-2"
+                            disabled={bookingSavingId === booking.id}
+                          >
+                            Set Pending
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleBookingDelete(booking.id)}
+                            className="luxury-button px-4 py-2"
+                            disabled={bookingSavingId === booking.id}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))
+              )}
+              {bookingError ? <p className="text-sm text-[#6a6a6a]">{bookingError}</p> : null}
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            eyebrow="Subscribers"
+            title="Email audience"
+            description="Manage captured emails from the site popup and newsletter forms."
+          >
+            <div id="subscribers" className="grid gap-4">
+              {subscribers.length === 0 ? (
+                <div className="border border-dashed border-black/15 bg-[#faf8f3] p-6 text-sm leading-7 text-[#6a6a6a]">
+                  No subscribers yet.
+                </div>
+              ) : (
+                subscribers.map((subscriber) => (
+                  <article
+                    key={subscriber.id}
+                    className="flex flex-wrap items-center justify-between gap-4 border border-black/10 bg-[#fcfbf8] p-5"
+                  >
+                    <div className="space-y-1">
+                      <p className="font-medium text-black">{subscriber.email}</p>
+                      <p className="text-sm text-[#6a6a6a]">
+                        {new Date(subscriber.createdAt).toLocaleDateString("en-NG", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSubscriberDelete(subscriber.id)}
+                      className="luxury-button px-4 py-2"
+                    >
+                      Delete
+                    </button>
+                  </article>
+                ))
+              )}
+              {subscriberError ? <p className="text-sm text-[#6a6a6a]">{subscriberError}</p> : null}
+            </div>
+          </SectionCard>
 
           {[
             {

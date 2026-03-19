@@ -20,7 +20,7 @@ export function BridalSection() {
       align="center"
     >
       <div className="grid gap-px bg-line md:grid-cols-2">
-        {images.bridal.slice(0, 2).map((src, index) => (
+        {images.bridalFeature.slice(0, 2).map((src, index) => (
           <FadeIn key={src} className="bg-paper p-5 sm:p-6 lg:p-8">
             <div className="space-y-3">
               <AnimatedImage src={src} alt={`Bridal couture look ${index + 1}`} />

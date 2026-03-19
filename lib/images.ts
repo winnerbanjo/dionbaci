@@ -1,5 +1,6 @@
 export type ImageSet = {
   hero: string[];
+  bridalFeature: string[];
   bridal: string[];
   collections: string[];
   atelier: string[];
@@ -15,9 +16,14 @@ export const images: ImageSet = {
     "/images/hero/hero-02.JPG.jpeg",
     "/images/hero/hero-03.JPG.jpeg",
   ],
-  bridal: [
+  bridalFeature: [
     "/images/bridal/bridal-01.JPG.jpeg",
     "/images/bridal/bridal-02.JPG.jpeg",
+  ],
+  bridal: [
+    "/images/IMG_7379.PNG",
+    "/images/IMG_7460.PNG",
+    "/images/IMG_7462.PNG",
   ],
   collections: [
     "/images/collections/collection-01.JPG.jpeg",

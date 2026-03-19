@@ -12,12 +12,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing image payload" }, { status: 400 });
     }
 
+    const cloudName =
+      process.env.CLOUDINARY_CLOUD_NAME ?? process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
     if (
-      !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+      !cloudName ||
       !process.env.CLOUDINARY_API_KEY ||
       !process.env.CLOUDINARY_API_SECRET
     ) {
-      return NextResponse.json({ error: "Cloudinary is not configured" }, { status: 503 });
+      return NextResponse.json(
+        { error: "Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET." },
+        { status: 503 }
+      );
     }
 
     const folderMap: Record<string, string> = {
