@@ -1,7 +1,5 @@
-import Link from "next/link";
-
+import { BeautyGrid } from "@/components/beauty-grid";
 import { PageHero } from "@/components/page-hero";
-import { ShopGrid } from "@/components/shop-grid";
 import { Section } from "@/components/ui/Section";
 import { getItemsByType } from "@/lib/looks";
 
@@ -13,9 +11,8 @@ export default async function BeautyPage() {
       <>
         <PageHero
           eyebrow="Beauty"
-          title="Beauty rituals shaped with the same restraint as the atelier."
-          description="Discover a considered edit of beauty essentials curated to extend the Dion Baci world beyond fashion."
-          primaryCta={{ label: "Book Consultation", href: "/book-consultation" }}
+          title="A considered beauty edit for modern ritual."
+          description="Discover a refined collection of body and hair essentials presented with the same clarity, restraint, and premium finish as the house."
         />
         <div className="page-shell p-10 text-center">
           <p>No items available yet</p>
@@ -28,20 +25,16 @@ export default async function BeautyPage() {
     <>
       <PageHero
         eyebrow="Beauty"
-        title="Beauty rituals shaped with the same restraint as the atelier."
-        description="Discover a considered edit of beauty essentials curated to extend the Dion Baci world beyond fashion."
-        primaryCta={{ label: "Book Consultation", href: "/book-consultation" }}
+        title="A considered beauty edit for modern ritual."
+        description="Discover a refined collection of body and hair essentials presented with the same clarity, restraint, and premium finish as the house."
       />
       <Section
         eyebrow="Beauty Edit"
-        title="Admin-controlled beauty products, presented with the same editorial calm."
-        description={<p>Every product detail remains minimal, deliberate, and aligned with the brand universe.</p>}
+        title="Body and hair essentials with a clean, deliberate point of view."
+        description={<p>Each product is presented with clarity, balance, and a direct path to order.</p>}
         border={false}
       >
-        <ShopGrid items={products} />
-        <Link href="/book-consultation" className="luxury-button">
-          Book Consultation
-        </Link>
+        <BeautyGrid items={products} />
       </Section>
     </>
   );
