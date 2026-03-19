@@ -59,27 +59,6 @@ const defaultItems = [
     type: "look",
     image: "/images/shop/shop-look-08.PNG",
   },
-  {
-    slug: "beauty-ritual-01",
-    name: "Shea Ritual Balm",
-    category: "Body Care",
-    type: "beauty",
-    image: "/images/beauty/beauty-01.PNG",
-  },
-  {
-    slug: "beauty-ritual-02",
-    name: "Coconut Hair Veil",
-    category: "Hair Care",
-    type: "beauty",
-    image: "/images/beauty/beauty-02.PNG",
-  },
-  {
-    slug: "beauty-ritual-03",
-    name: "Kernel Glow Oil",
-    category: "Treatment",
-    type: "beauty",
-    image: "/images/beauty/beauty-03.PNG",
-  },
 ];
 
 async function main() {

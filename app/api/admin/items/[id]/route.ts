@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { createItemSlug } from "@/lib/looks";
 
 type RouteContext = {
   params: Promise<{
@@ -16,19 +16,23 @@ export async function PATCH(request: Request, context: RouteContext) {
   const image = String(body.image ?? "").trim();
   const category = String(body.category ?? "").trim();
   const type = String(body.type ?? "").trim().toLowerCase();
+  const slug = String(body.slug ?? "").trim() || createItemSlug(name);
 
-  if (!id || !name || !image || !category || !type) {
+  if (!id || !name || !image || !category || !type || !slug) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
   try {
-    await prisma.$executeRaw(
-      Prisma.sql`
-        UPDATE "Item"
-        SET "name" = ${name}, "image" = ${image}, "category" = ${category}, "type" = ${type}
-        WHERE "id" = ${id}
-      `
-    );
+    await prisma.item.update({
+      where: { id },
+      data: {
+        name,
+        image,
+        category,
+        type,
+        slug,
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -45,12 +49,9 @@ export async function DELETE(_: Request, context: RouteContext) {
   }
 
   try {
-    await prisma.$executeRaw(
-      Prisma.sql`
-        DELETE FROM "Item"
-        WHERE "id" = ${id}
-      `
-    );
+    await prisma.item.delete({
+      where: { id },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

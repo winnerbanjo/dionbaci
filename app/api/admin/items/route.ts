@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { getAllItems } from "@/lib/looks";
+import { createItemSlug, getAllItems, normalizeItem } from "@/lib/looks";
 
 export async function GET() {
   try {
@@ -21,25 +20,26 @@ export async function POST(request: Request) {
   const image = String(body.image ?? "").trim();
   const category = String(body.category ?? "").trim();
   const type = String(body.type ?? "").trim().toLowerCase();
+  const slug = String(body.slug ?? "").trim() || createItemSlug(name);
 
-  if (!name || !image || !category || !type) {
+  if (!name || !image || !category || !type || !slug) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
   try {
-    const id = crypto.randomUUID();
+    const createdItem = await prisma.item.create({
+      data: {
+        name,
+        slug,
+        image,
+        category,
+        type,
+      },
+    });
 
-    await prisma.$executeRaw(
-      Prisma.sql`
-        INSERT INTO "Item" ("id", "name", "image", "category", "type")
-        VALUES (${id}, ${name}, ${image}, ${category}, ${type})
-      `
-    );
+    const item = normalizeItem(createdItem);
 
-    const items = await getAllItems();
-    const item = items.find((entry) => entry.id === id);
-
-    return NextResponse.json({ item: item ?? null });
+    return NextResponse.json({ item });
   } catch (error) {
     console.error("DATABASE ERROR:", error);
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });

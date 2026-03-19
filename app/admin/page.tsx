@@ -1,9 +1,13 @@
 "use client";
 
+import Image from "next/image";
+import type { ReactNode } from "react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand-logo";
+
+type ItemType = "look" | "beauty";
 
 type Item = {
   id: string;
@@ -11,7 +15,14 @@ type Item = {
   image: string;
   category: string;
   slug: string;
-  type: "look" | "beauty";
+  type: ItemType;
+};
+
+type ItemForm = {
+  name: string;
+  category: string;
+  slug: string;
+  type: ItemType;
 };
 
 type SettingsForm = {
@@ -19,6 +30,20 @@ type SettingsForm = {
   bridal_customization_fee: string;
   eveningwear_bespoke_fee: string;
   custom_fee: string;
+};
+
+const defaultItemForm: ItemForm = {
+  name: "",
+  category: "Bridal",
+  slug: "",
+  type: "look",
+};
+
+const defaultSettings: SettingsForm = {
+  bridal_bespoke_fee: "500000",
+  bridal_customization_fee: "400000",
+  eveningwear_bespoke_fee: "200000",
+  custom_fee: "120000",
 };
 
 const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -36,6 +61,15 @@ const monthNames = [
   "November",
   "December",
 ];
+
+function createSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
 
 function getUpcomingConsultationDates() {
   const dates: string[] = [];
@@ -62,28 +96,75 @@ function formatNaira(value: string) {
   }).format(Number.isFinite(amount) ? amount : 0);
 }
 
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Unable to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadImage(file: File, type: ItemType) {
+  const base64 = await readFileAsDataUrl(file);
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      file: base64,
+      type,
+    }),
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok || !data?.secure_url) {
+    throw new Error(data?.error ?? "Unable to upload image");
+  }
+
+  return String(data.secure_url);
+}
+
+function SectionCard({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
+      <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">{eyebrow}</p>
+      <h2 className="mt-3 font-serif text-3xl leading-tight">{title}</h2>
+      {description ? <p className="mt-4 max-w-2xl text-sm leading-7 text-[#6a6a6a]">{description}</p> : null}
+      <div className="mt-8">{children}</div>
+    </section>
+  );
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [itemSavingId, setItemSavingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    image: "",
-    category: "Bridal",
-    type: "look" as "look" | "beauty",
-  });
-  const [settings, setSettings] = useState<SettingsForm>({
-    bridal_bespoke_fee: "500000",
-    bridal_customization_fee: "400000",
-    eveningwear_bespoke_fee: "200000",
-    custom_fee: "120000",
-  });
+  const [uploadingForId, setUploadingForId] = useState<string | null>(null);
+  const [creatingItem, setCreatingItem] = useState(false);
+  const [form, setForm] = useState<ItemForm>(defaultItemForm);
+  const [newItemFile, setNewItemFile] = useState<File | null>(null);
+  const [editFiles, setEditFiles] = useState<Record<string, File | null>>({});
+  const [settings, setSettings] = useState<SettingsForm>(defaultSettings);
 
   useEffect(() => {
     const auth = localStorage.getItem("admin-auth");
@@ -95,95 +176,141 @@ export default function AdminPage() {
     setAuthorized(true);
   }, [router]);
 
-  useEffect(() => {
-    if (!authorized) return;
+  const loadDashboard = async () => {
+    setLoading(true);
 
-    const loadDashboard = async () => {
+    try {
       const [itemsResponse, settingsResponse] = await Promise.all([
         fetch("/api/admin/items", { cache: "no-store" }),
         fetch("/api/admin/settings", { cache: "no-store" }),
       ]);
 
-      const itemsData = await itemsResponse.json();
-      const settingsData = await settingsResponse.json();
+      const itemsData = await itemsResponse.json().catch(() => null);
+      const settingsData = await settingsResponse.json().catch(() => null);
 
       if (!itemsResponse.ok) {
-        setError(itemsData.error ?? "Unable to load items");
+        setError(itemsData?.error ?? "Unable to load items");
         setItems([]);
       } else {
         setError(null);
-        setItems(itemsData.items ?? []);
+        setItems(itemsData?.items ?? []);
       }
 
       if (!settingsResponse.ok) {
-        setSettingsError(settingsData.error ?? "Unable to load settings");
+        setSettingsError(settingsData?.error ?? "Unable to load settings");
       } else {
         setSettingsError(null);
-        setSettings(settingsData.settings ?? settings);
+        setSettings(settingsData?.settings ?? defaultSettings);
       }
-
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load dashboard");
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    loadDashboard();
-  }, [authorized]);
-
-  const upcomingDates = useMemo(() => getUpcomingConsultationDates(), []);
-  const beautyCount = items.filter((item) => item.type === "beauty").length;
-  const lookCount = items.filter((item) => item.type === "look").length;
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const response = await fetch("/api/admin/items", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...form,
-        type: form.type.toLowerCase(),
-      }),
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      alert(data?.error ?? "Unable to save item");
+  useEffect(() => {
+    if (!authorized) {
       return;
     }
 
-    const data = await response.json();
-    if (data.item) {
-      setItems((current) => [data.item, ...current]);
+    void loadDashboard();
+  }, [authorized]);
+
+  const upcomingDates = useMemo(() => getUpcomingConsultationDates(), []);
+  const looks = useMemo(() => items.filter((item) => item.type === "look"), [items]);
+  const beautyProducts = useMemo(() => items.filter((item) => item.type === "beauty"), [items]);
+
+  const stats = [
+    { label: "Total Products", value: String(items.length) },
+    { label: "Beauty Products", value: String(beautyProducts.length) },
+    { label: "Fashion Looks", value: String(looks.length) },
+    { label: "Consultation Days", value: "Tue / Thu" },
+  ];
+
+  const handleCreateItem = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!newItemFile) {
+      setFormError("Select an image to upload");
+      return;
     }
-    setForm({
-      name: "",
-      image: "",
-      category: "Bridal",
-      type: "look",
-    });
+
+    setCreatingItem(true);
+    setFormError(null);
+
+    try {
+      const image = await uploadImage(newItemFile, form.type);
+
+      const response = await fetch("/api/admin/items", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...form,
+          image,
+          slug: form.slug || createSlug(form.name),
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.item) {
+        throw new Error(data?.error ?? "Unable to create item");
+      }
+
+      setItems((current) => [data.item, ...current]);
+      setForm(defaultItemForm);
+      setNewItemFile(null);
+    } catch (uploadError) {
+      setFormError(uploadError instanceof Error ? uploadError.message : "Unable to create item");
+    } finally {
+      setCreatingItem(false);
+    }
   };
 
   const handleItemUpdate = async (item: Item) => {
     setItemSavingId(item.id);
 
-    const response = await fetch(`/api/admin/items/${item.id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(item),
-    });
+    try {
+      let image = item.image;
+      const selectedFile = editFiles[item.id];
 
-    if (!response.ok) {
+      if (selectedFile) {
+        setUploadingForId(item.id);
+        image = await uploadImage(selectedFile, item.type);
+      }
+
+      const response = await fetch(`/api/admin/items/${item.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...item,
+          image,
+          slug: item.slug || createSlug(item.name),
+        }),
+      });
+
       const data = await response.json().catch(() => null);
-      alert(data?.error ?? "Unable to update item");
-      setItemSavingId(null);
-      return;
-    }
 
-    setEditingId(null);
-    setItemSavingId(null);
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Unable to update item");
+      }
+
+      setItems((current) =>
+        current.map((entry) => (entry.id === item.id ? { ...item, image, slug: item.slug || createSlug(item.name) } : entry))
+      );
+      setEditFiles((current) => ({ ...current, [item.id]: null }));
+      setEditingId(null);
+    } catch (updateError) {
+      alert(updateError instanceof Error ? updateError.message : "Unable to update item");
+    } finally {
+      setUploadingForId(null);
+      setItemSavingId(null);
+    }
   };
 
   const handleItemDelete = async (id: string) => {
@@ -191,8 +318,9 @@ export default function AdminPage() {
       method: "DELETE",
     });
 
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
-      const data = await response.json().catch(() => null);
       alert(data?.error ?? "Unable to delete item");
       return;
     }
@@ -220,7 +348,7 @@ export default function AdminPage() {
       return;
     }
 
-    setSettings(data.settings ?? settings);
+    setSettings(data?.settings ?? settings);
     setSettingsError(null);
     setSettingsSaving(false);
   };
@@ -235,48 +363,60 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f1ea] text-black">
-      <div className="mx-auto grid min-h-screen max-w-[1800px] lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-black/10 bg-white px-6 py-8 lg:px-8">
+    <div className="min-h-screen bg-[#f4efe6] text-black">
+      <div className="mx-auto grid min-h-screen max-w-[1800px] lg:grid-cols-[300px_1fr]">
+        <aside className="border-r border-black/10 bg-[#111111] px-6 py-8 text-white lg:px-8">
           <div className="space-y-8">
-            <BrandLogo href="" width={210} imageClassName="max-h-10 w-auto" />
-            <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Studio Dashboard</p>
-              <h1 className="font-serif text-3xl leading-tight">Dion Baci Admin</h1>
-              <p className="text-sm leading-7 text-[#6a6a6a]">
-                Manage products, consultation fees, and the weekly booking rhythm from one place.
+            <BrandLogo href="" width={210} imageClassName="max-h-10 w-auto brightness-0 invert" />
+            <div className="space-y-3">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">Admin Studio</p>
+              <h1 className="font-serif text-3xl leading-tight">Dion Baci Control Room</h1>
+              <p className="text-sm leading-7 text-white/70">
+                Oversee products, pricing, and the consultation funnel with a cleaner operating view.
               </p>
             </div>
 
-            <div className="grid gap-px border border-black/10 bg-black/10">
-              {[
-                { label: "Total Products", value: String(items.length) },
-                { label: "Beauty Products", value: String(beautyCount) },
-                { label: "Fashion Looks", value: String(lookCount) },
-                { label: "Consultation Days", value: "Tue / Thu" },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-white p-5">
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-[#6a6a6a]">{stat.label}</p>
-                  <p className="mt-3 font-serif text-3xl">{stat.value}</p>
+            <nav className="grid gap-2 text-sm text-white/70">
+              <a href="#dashboard" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Dashboard Overview
+              </a>
+              <a href="#looks" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Products
+              </a>
+              <a href="#beauty" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Beauty Products
+              </a>
+              <a href="#settings" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Consultation Settings
+              </a>
+              <a href="#orders" className="rounded-full border border-white/10 px-4 py-3 transition hover:border-white/40 hover:text-white">
+                Orders
+              </a>
+            </nav>
+
+            <div className="grid gap-px border border-white/10 bg-white/10">
+              {stats.map((stat) => (
+                <div key={stat.label} className="bg-[#151515] p-5">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-white/50">{stat.label}</p>
+                  <p className="mt-3 font-serif text-3xl text-white">{stat.value}</p>
                 </div>
               ))}
             </div>
 
-            <button onClick={logout} className="luxury-button w-full justify-center">
+            <button onClick={logout} className="luxury-button w-full justify-center border-white text-white hover:bg-white hover:text-black">
               Logout
             </button>
           </div>
         </aside>
 
         <div className="space-y-8 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
-          <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Overview</p>
-              <h2 className="mt-3 font-serif text-4xl leading-tight">Today’s studio view</h2>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#6a6a6a]">
-                Keep beauty products, fashion pieces, and consultation pricing aligned across the brand.
-              </p>
-              <div className="mt-8 grid gap-px border border-black/10 bg-black/10 sm:grid-cols-2">
+          <section id="dashboard" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <SectionCard
+              eyebrow="Dashboard Overview"
+              title="Today’s studio view"
+              description="A premium operational view of inventory, pricing, and the weekly consultation rhythm."
+            >
+              <div className="grid gap-px border border-black/10 bg-black/10 sm:grid-cols-2">
                 {upcomingDates.map((date) => (
                   <div key={date} className="bg-white p-5">
                     <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">Consultation Date</p>
@@ -285,14 +425,97 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </SectionCard>
 
-            <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Consultation Fees</p>
-              <h2 className="mt-3 font-serif text-3xl">Pricing control</h2>
-              <form onSubmit={handleSettingsSubmit} className="mt-8 grid gap-5">
+            <SectionCard
+              eyebrow="Product Intake"
+              title="Add a new product"
+              description="Upload the asset, define the product type, and send it straight into the live catalog."
+            >
+              <form onSubmit={handleCreateItem} className="grid gap-4">
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Name</span>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        name: event.target.value,
+                        slug: current.slug ? current.slug : createSlug(event.target.value),
+                      }))
+                    }
+                    className="w-full border border-black/10 px-4 py-4 outline-none transition focus:border-black"
+                    placeholder="Ivory Ceremony Dress"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Category</span>
+                  <input
+                    type="text"
+                    value={form.category}
+                    onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+                    className="w-full border border-black/10 px-4 py-4 outline-none transition focus:border-black"
+                    placeholder="Bridal"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Slug</span>
+                  <input
+                    type="text"
+                    value={form.slug}
+                    onChange={(event) => setForm((current) => ({ ...current, slug: createSlug(event.target.value) }))}
+                    className="w-full border border-black/10 px-4 py-4 outline-none transition focus:border-black"
+                    placeholder="ivory-ceremony-dress"
+                  />
+                </label>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Type</span>
+                    <select
+                      value={form.type}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, type: event.target.value as ItemType }))
+                      }
+                      className="w-full border border-black/10 px-4 py-4 outline-none transition focus:border-black"
+                    >
+                      <option value="look">Look</option>
+                      <option value="beauty">Beauty</option>
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Image File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => setNewItemFile(event.target.files?.[0] ?? null)}
+                      className="w-full border border-black/10 px-4 py-[0.95rem] text-sm outline-none file:mr-4 file:border-0 file:bg-black file:px-4 file:py-2 file:text-xs file:uppercase file:tracking-[0.18em] file:text-white"
+                    />
+                  </label>
+                </div>
+
+                {formError ? <p className="text-sm text-[#6a6a6a]">{formError}</p> : null}
+
+                <button type="submit" className="luxury-button w-full justify-center" disabled={creatingItem}>
+                  {creatingItem ? "Uploading..." : "Add Product"}
+                </button>
+              </form>
+            </SectionCard>
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
+            <SectionCard
+              eyebrow="Consultation Settings"
+              title="Pricing control"
+              description="Update atelier consultation fees and keep the booking experience current."
+            >
+              <form id="settings" onSubmit={handleSettingsSubmit} className="grid gap-5">
                 {[
-                  ["bridal_bespoke_fee", "Bridal Bespoke"],
+                  ["bridal_bespoke_fee", "Bridal Couture / Bespoke"],
                   ["bridal_customization_fee", "Bridal Customization"],
                   ["eveningwear_bespoke_fee", "Eveningwear Bespoke"],
                   ["custom_fee", "Custom / Made-to-order"],
@@ -305,7 +528,7 @@ export default function AdminPage() {
                       onChange={(event) =>
                         setSettings((current) => ({ ...current, [key]: event.target.value }))
                       }
-                      className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
+                      className="w-full border border-black/10 px-4 py-4 outline-none transition focus:border-black"
                     />
                     <span className="mt-2 block text-xs text-[#6a6a6a]">
                       {formatNaira(settings[key as keyof SettingsForm])}
@@ -319,102 +542,92 @@ export default function AdminPage() {
                   {settingsError ? <p className="text-sm text-[#6a6a6a]">{settingsError}</p> : null}
                 </div>
               </form>
-            </section>
+            </SectionCard>
+
+            <SectionCard
+              eyebrow="Orders"
+              title="Order pipeline"
+              description="A placeholder surface for WhatsApp and direct-order activity until formal order storage is added."
+            >
+              <div
+                id="orders"
+                className="grid gap-4 border border-dashed border-black/15 bg-[#faf8f3] p-6 text-sm leading-7 text-[#6a6a6a]"
+              >
+                <p>Orders currently convert through WhatsApp. This panel is ready for the next step: persisted order records and status tracking.</p>
+                <div className="grid gap-px border border-black/10 bg-black/10 sm:grid-cols-3">
+                  {[
+                    { label: "Incoming", value: "WhatsApp" },
+                    { label: "Status", value: "Placeholder" },
+                    { label: "Next Phase", value: "Order Sync" },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-white p-4">
+                      <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">{item.label}</p>
+                      <p className="mt-2 font-serif text-xl text-black">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SectionCard>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-            <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Add Product</p>
-              <h2 className="mt-3 font-serif text-3xl">Create a new item</h2>
-              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Name</span>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
-                    placeholder="Leave-in Creme Conditioner 300ML"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Image URL</span>
-                  <input
-                    type="text"
-                    value={form.image}
-                    onChange={(event) => setForm((current) => ({ ...current, image: event.target.value }))}
-                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
-                    placeholder="/images/beauty/leave-in-creme-conditioner-300ml-tube.PNG"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Category</span>
-                  <input
-                    type="text"
-                    value={form.category}
-                    onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Type</span>
-                  <select
-                    value={form.type}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, type: event.target.value as "look" | "beauty" }))
-                    }
-                    className="w-full border border-black/10 px-4 py-4 outline-none focus:border-black"
-                  >
-                    <option value="look">Look</option>
-                    <option value="beauty">Beauty</option>
-                  </select>
-                </label>
-                <button type="submit" className="luxury-button w-full justify-center">
-                  Add Item
-                </button>
-              </form>
-            </section>
-
-            <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Products</p>
-                  <h2 className="mt-3 font-serif text-3xl">Edit or delete items</h2>
-                </div>
-                {error ? <p className="text-sm text-[#6a6a6a]">{error}</p> : null}
-              </div>
-              <div className="mt-8 grid gap-px border border-black/10 bg-black/10 sm:grid-cols-2 xl:grid-cols-3">
+          {[
+            {
+              id: "looks",
+              eyebrow: "Products",
+              title: "Fashion looks",
+              description: "Edit, replace imagery, or remove atelier pieces without leaving the dashboard.",
+              list: looks,
+              empty: "No looks added yet.",
+            },
+            {
+              id: "beauty",
+              eyebrow: "Beauty Products",
+              title: "Beauty catalog",
+              description: "Keep the beauty edit clean, direct, and ready for order.",
+              list: beautyProducts,
+              empty: "No beauty products added yet.",
+            },
+          ].map((section) => (
+            <SectionCard
+              key={section.id}
+              eyebrow={section.eyebrow}
+              title={section.title}
+              description={section.description}
+            >
+              <div id={section.id} className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
                 {loading ? (
-                  <div className="bg-white p-6 text-sm text-[#6a6a6a]">Loading items...</div>
+                  <div className="border border-black/10 bg-[#faf8f3] p-6 text-sm text-[#6a6a6a]">
+                    Loading items...
+                  </div>
+                ) : section.list.length === 0 ? (
+                  <div className="border border-black/10 bg-[#faf8f3] p-6 text-sm text-[#6a6a6a]">
+                    {section.empty}
+                  </div>
                 ) : (
-                  items.map((item) => (
-                    <div key={item.id} className="bg-white p-6">
-                      <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">{item.category}</p>
+                  section.list.map((item) => (
+                    <article
+                      key={item.id}
+                      className="flex flex-col gap-4 border border-black/10 bg-[#fcfbf8] p-4 transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)]"
+                    >
+                      <div className="relative aspect-[4/5] overflow-hidden bg-[#f2eee7]">
+                        <Image src={item.image} alt={item.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+                      </div>
+
                       {editingId === item.id ? (
-                        <div className="mt-4 space-y-3">
+                        <div className="flex flex-col gap-3">
                           <input
                             type="text"
                             value={item.name}
                             onChange={(event) =>
                               setItems((current) =>
                                 current.map((entry) =>
-                                  entry.id === item.id ? { ...entry, name: event.target.value } : entry
+                                  entry.id === item.id
+                                    ? { ...entry, name: event.target.value, slug: createSlug(event.target.value) }
+                                    : entry
                                 )
                               )
                             }
-                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
-                          />
-                          <input
-                            type="text"
-                            value={item.image}
-                            onChange={(event) =>
-                              setItems((current) =>
-                                current.map((entry) =>
-                                  entry.id === item.id ? { ...entry, image: event.target.value } : entry
-                                )
-                              )
-                            }
-                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
+                            className="w-full border border-black/10 px-3 py-3 outline-none transition focus:border-black"
                           />
                           <input
                             type="text"
@@ -426,7 +639,21 @@ export default function AdminPage() {
                                 )
                               )
                             }
-                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
+                            className="w-full border border-black/10 px-3 py-3 outline-none transition focus:border-black"
+                          />
+                          <input
+                            type="text"
+                            value={item.slug}
+                            onChange={(event) =>
+                              setItems((current) =>
+                                current.map((entry) =>
+                                  entry.id === item.id
+                                    ? { ...entry, slug: createSlug(event.target.value) }
+                                    : entry
+                                )
+                              )
+                            }
+                            className="w-full border border-black/10 px-3 py-3 outline-none transition focus:border-black"
                           />
                           <select
                             value={item.type}
@@ -434,26 +661,39 @@ export default function AdminPage() {
                               setItems((current) =>
                                 current.map((entry) =>
                                   entry.id === item.id
-                                    ? { ...entry, type: event.target.value as "look" | "beauty" }
+                                    ? { ...entry, type: event.target.value as ItemType }
                                     : entry
                                 )
                               )
                             }
-                            className="w-full border border-black/10 px-3 py-3 outline-none focus:border-black"
+                            className="w-full border border-black/10 px-3 py-3 outline-none transition focus:border-black"
                           >
                             <option value="look">Look</option>
                             <option value="beauty">Beauty</option>
                           </select>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) =>
+                              setEditFiles((current) => ({
+                                ...current,
+                                [item.id]: event.target.files?.[0] ?? null,
+                              }))
+                            }
+                            className="w-full border border-black/10 px-3 py-3 text-sm outline-none file:mr-4 file:border-0 file:bg-black file:px-4 file:py-2 file:text-xs file:uppercase file:tracking-[0.18em] file:text-white"
+                          />
+                          <p className="break-all text-xs text-[#6a6a6a]">{item.image}</p>
                         </div>
                       ) : (
-                        <>
-                          <h3 className="mt-4 text-2xl leading-tight">{item.name}</h3>
-                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-black">{item.type}</p>
-                          <p className="mt-3 break-all text-sm leading-7 text-[#6a6a6a]">{item.image}</p>
-                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-[#6a6a6a]">{item.slug}</p>
-                        </>
+                        <div className="flex flex-col gap-2">
+                          <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">{item.category}</p>
+                          <h3 className="font-serif text-2xl leading-tight">{item.name}</h3>
+                          <p className="text-xs uppercase tracking-[0.18em] text-black/70">{item.type}</p>
+                          <p className="break-all text-xs text-[#6a6a6a]">{item.slug}</p>
+                        </div>
                       )}
-                      <div className="mt-4 flex flex-wrap gap-3">
+
+                      <div className="mt-auto flex flex-wrap gap-3 pt-2">
                         {editingId === item.id ? (
                           <>
                             <button
@@ -462,11 +702,19 @@ export default function AdminPage() {
                               className="luxury-button px-4 py-2"
                               disabled={itemSavingId === item.id}
                             >
-                              {itemSavingId === item.id ? "Saving..." : "Save"}
+                              {uploadingForId === item.id
+                                ? "Uploading..."
+                                : itemSavingId === item.id
+                                  ? "Saving..."
+                                  : "Save"}
                             </button>
                             <button
                               type="button"
-                              onClick={() => setEditingId(null)}
+                              onClick={() => {
+                                setEditingId(null);
+                                setEditFiles((current) => ({ ...current, [item.id]: null }));
+                                void loadDashboard();
+                              }}
                               className="luxury-button luxury-button--ghost px-4 py-2"
                             >
                               Cancel
@@ -491,12 +739,13 @@ export default function AdminPage() {
                           </>
                         )}
                       </div>
-                    </div>
+                    </article>
                   ))
                 )}
               </div>
-            </section>
-          </section>
+              {error ? <p className="mt-4 text-sm text-[#6a6a6a]">{error}</p> : null}
+            </SectionCard>
+          ))}
         </div>
       </div>
     </div>
