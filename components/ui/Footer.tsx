@@ -4,6 +4,9 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { images } from "@/lib/images";
 
+const INSTAGRAM_URL =
+  "https://www.instagram.com/dionbaciworld?igsi=MWl3aHc1cjFsa3gyMA%3D%3D&utm_source=qr";
+
 const navigationLinks = [
   { label: "Bridal", href: "/bridal" },
   { label: "Collections", href: "/collections" },
@@ -49,7 +52,7 @@ export function Footer() {
               <h3 className="mt-3 text-3xl">Follow us on Instagram</h3>
             </div>
             <a
-              href="https://www.instagram.com/dionbaciofficial/"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noreferrer"
               className="luxury-button"
@@ -61,7 +64,7 @@ export function Footer() {
             {images.instagram.map((src, index) => (
               <a
                 key={`${src}-${index}`}
-                href="https://www.instagram.com/dionbaciofficial/"
+                href={INSTAGRAM_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="relative aspect-square overflow-hidden bg-[#f7f7f5]"
@@ -130,7 +133,7 @@ export function Footer() {
             <p className="eyebrow">Social</p>
             <div className="flex items-center gap-3">
               <a
-                href="https://www.instagram.com/dionbaciofficial/"
+                href={INSTAGRAM_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line text-ink hover:opacity-70"
