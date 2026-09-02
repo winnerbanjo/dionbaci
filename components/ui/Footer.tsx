@@ -112,7 +112,7 @@ export function Footer() {
             <p className="eyebrow">Contact</p>
             <div className="space-y-2 text-sm leading-7 text-mist">
               <p>
-                <a href="tel:+2347033947449">+2347033947449</a>
+                What&apos;s App: <a href="tel:+2347033947449">+2347033947449</a>
               </p>
               <p>
                 Front Desk: <a href="tel:+2349150715197">+2349150715197</a>
