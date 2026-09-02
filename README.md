@@ -28,8 +28,7 @@ cp .env.example .env.local
 
 3. Fill in your real values for:
 
-- `DATABASE_URL`
-- `DIRECT_URL`
+- `MONGODB_URI`
 - `NEXT_PUBLIC_ADMIN_PASSCODE`
 
 4. Generate Prisma client:
@@ -53,7 +52,7 @@ http://localhost:3000
 ## Database Notes
 
 - Prisma schema lives in `prisma/schema.prisma`
-- Supabase is used as the PostgreSQL provider
+- MongoDB Atlas is used as the database provider
 - For schema sync, use:
 
 ```bash
@@ -74,15 +73,14 @@ Deploy on Vercel.
 
 Required environment variables:
 
-- `DATABASE_URL`
-- `DIRECT_URL`
+- `MONGODB_URI`
 - `NEXT_PUBLIC_ADMIN_PASSCODE`
 
 Recommended production steps:
 
 1. Add the environment variables in Vercel project settings.
 2. Run `npx prisma generate` during build.
-3. Ensure the Supabase database accepts connections from the deployment environment.
+3. Ensure MongoDB Atlas accepts connections from the deployment environment.
 4. Deploy the `main` branch.
 
 ## Project Structure

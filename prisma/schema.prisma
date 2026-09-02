@@ -3,13 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
 }
 
 model Item {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   slug      String   @unique
   name      String
   image     String
@@ -19,13 +18,13 @@ model Item {
 }
 
 model Setting {
-  key       String   @id
+  key       String   @id @map("_id")
   value     String
   updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   email        String
   phone        String
@@ -40,7 +39,7 @@ model Booking {
 }
 
 model Subscriber {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   createdAt DateTime @default(now())
 }
