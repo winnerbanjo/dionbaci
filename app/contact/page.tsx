@@ -16,6 +16,9 @@ export default function ContactPage() {
             <a href="tel:+2347033947449" className="mt-6 block text-3xl leading-tight">
               +2347033947449
             </a>
+            <a href="tel:+2349150715197" className="mt-3 block text-xl leading-tight">
+              Front Desk: +2349150715197
+            </a>
           </div>
           <div className="bg-paper p-8 sm:p-10">
             <p className="eyebrow">Email</p>
@@ -26,7 +29,7 @@ export default function ContactPage() {
           <div className="bg-paper p-8 sm:p-10">
             <p className="eyebrow">Address</p>
             <p className="mt-6 text-3xl leading-tight">
-              Lekki, Lagos Nigeria
+              Lekki, Lagos, Nigeria.
             </p>
           </div>
         </div>

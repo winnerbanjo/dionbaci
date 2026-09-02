@@ -115,10 +115,13 @@ export function Footer() {
                 <a href="tel:+2347033947449">+2347033947449</a>
               </p>
               <p>
+                Front Desk: <a href="tel:+2349150715197">+2349150715197</a>
+              </p>
+              <p>
                 <a href="mailto:Dionbaci@gmail.com">Dionbaci@gmail.com</a>
               </p>
               <p>
-                Lekki, Lagos Nigeria
+                Lekki, Lagos, Nigeria.
               </p>
             </div>
           </div>
