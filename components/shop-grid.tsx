@@ -8,6 +8,14 @@ type ShopGridProps = {
   items: ShopItem[];
 };
 
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
 export function ShopGrid({ items }: ShopGridProps) {
   if (!items || items.length === 0) {
     return (
@@ -30,6 +38,7 @@ export function ShopGrid({ items }: ShopGridProps) {
               <Link href={`/shop/${item.slug}`} className="block text-xl leading-tight sm:text-2xl">
                 {item.name}
               </Link>
+              {item.price ? <p className="font-serif text-base sm:text-lg">{formatPrice(item.price)}</p> : null}
             </div>
             <Link href={`/book-consultation?look=${item.slug}`} className="luxury-button w-full justify-center px-4 text-center text-[10px] sm:text-xs">
               Book Consultation for this Look

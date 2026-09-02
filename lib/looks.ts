@@ -12,6 +12,8 @@ type RawItem = {
   category?: string | null;
   image?: string | null;
   type?: string | null;
+  price?: number | null;
+  description?: string | null;
   createdAt?: Date | string | null;
 };
 
@@ -59,6 +61,8 @@ export function normalizeItem(item: RawItem): ShopItem | null {
     category: curatedBeautyItem?.category || curatedLookItem?.category || item.category?.trim() || "Atelier",
     image,
     type,
+    price: typeof item.price === "number" && item.price > 0 ? item.price : null,
+    description: item.description?.trim() || null,
     createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
   };
 }
@@ -71,6 +75,8 @@ function getCuratedBeautyItems(): ShopItem[] {
     category: item.category,
     image: item.image,
     type: "beauty",
+    price: null,
+    description: null,
     createdAt: new Date(`2026-03-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`),
   }));
 }
@@ -98,6 +104,8 @@ function getCuratedLookItems(): ShopItem[] {
     category: item.category,
     image: item.image,
     type: "look",
+    price: null,
+    description: null,
     createdAt: new Date(`2026-02-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`),
   }));
 }

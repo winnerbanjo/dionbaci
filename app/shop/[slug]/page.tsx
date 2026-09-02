@@ -11,6 +11,14 @@ type LookDetailPageProps = {
   }>;
 };
 
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
 export default async function LookDetailPage({ params }: LookDetailPageProps) {
   const { slug } = await params;
   const look = await getLookBySlug(slug);
@@ -32,8 +40,9 @@ export default async function LookDetailPage({ params }: LookDetailPageProps) {
         <FadeIn className="max-w-2xl space-y-6 lg:pt-8">
           <p className="eyebrow">{look.category}</p>
           <h1 className="text-5xl leading-tight sm:text-6xl">{look.name}</h1>
+          {look.price ? <p className="font-serif text-2xl sm:text-3xl">{formatPrice(look.price)}</p> : null}
           <p className="text-base leading-8 text-mist sm:text-lg">
-            This look is available through private consultation. Share your preferred fit, finish, and occasion during your appointment.
+            {look.description || "This look is available through private consultation. Share your preferred fit, finish, and occasion during your appointment."}
           </p>
           <div className="flex flex-wrap gap-4">
             <Link href={`/book-consultation?look=${look.slug}`} className="luxury-button">

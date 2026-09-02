@@ -8,6 +8,14 @@ type BeautyGridProps = {
   items: ShopItem[];
 };
 
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
 function getOrderHref(productName: string) {
   const message = encodeURIComponent(`I want to order ${productName}`);
   return `https://wa.me/2347033947449?text=${message}`;
@@ -42,6 +50,8 @@ export function BeautyGrid({ items }: BeautyGridProps) {
               <p className="text-[10px] uppercase tracking-[0.22em] text-mist sm:text-[11px]">
                 {item.category}
               </p>
+              {item.price ? <p className="font-serif text-base sm:text-lg">{formatPrice(item.price)}</p> : null}
+              {item.description ? <p className="line-clamp-3 text-xs leading-5 text-mist sm:text-sm">{item.description}</p> : null}
             </div>
             <Link
               href={getOrderHref(item.name)}

@@ -20,9 +20,11 @@ export async function POST(request: Request) {
   const image = String(body.image ?? "").trim();
   const category = String(body.category ?? "").trim();
   const type = String(body.type ?? "").trim().toLowerCase();
+  const price = Number(body.price);
+  const description = String(body.description ?? "").trim();
   const slug = String(body.slug ?? "").trim() || createItemSlug(name);
 
-  if (!name || !image || !category || !type || !slug) {
+  if (!name || !image || !category || !type || !slug || !description || !Number.isInteger(price) || price <= 0) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
@@ -34,6 +36,8 @@ export async function POST(request: Request) {
         image,
         category,
         type,
+        price,
+        description,
       },
     });
 

@@ -14,6 +14,8 @@ model Item {
   image     String
   category  String
   type      String
+  price     Int?
+  description String?
   createdAt DateTime @default(now())
 }
 

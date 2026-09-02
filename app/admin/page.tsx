@@ -17,6 +17,8 @@ type Item = {
   category: string;
   slug: string;
   type: ItemType;
+  price: number | string | null;
+  description: string | null;
 };
 
 type ItemForm = {
@@ -24,6 +26,8 @@ type ItemForm = {
   category: string;
   slug: string;
   type: ItemType;
+  price: string;
+  description: string;
 };
 
 type Booking = {
@@ -59,6 +63,8 @@ const defaultItemForm: ItemForm = {
   category: "Bridal",
   slug: "",
   type: "look",
+  price: "",
+  description: "",
 };
 
 const defaultSettings: SettingsForm = {
@@ -650,6 +656,32 @@ export default function AdminPage() {
                 </label>
 
                 <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Price (₦)</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    value={form.price}
+                    onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
+                    className="w-full border border-black/10 px-4 py-4 outline-none transition focus:border-black"
+                    placeholder="250000"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Product Description</span>
+                  <textarea
+                    required
+                    rows={5}
+                    value={form.description}
+                    onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                    className="w-full resize-y border border-black/10 px-4 py-4 leading-7 outline-none transition focus:border-black"
+                    placeholder="Describe the fabric, silhouette, finish, and ideal occasion."
+                  />
+                </label>
+
+                <label className="block">
                   <span className="mb-3 block text-xs uppercase tracking-[0.22em] text-[#6a6a6a]">Slug</span>
                   <input
                     type="text"
@@ -923,6 +955,34 @@ export default function AdminPage() {
                             className="w-full border border-black/10 px-3 py-3 outline-none transition focus:border-black"
                           />
                           <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            placeholder="Price (₦)"
+                            value={item.price ?? ""}
+                            onChange={(event) =>
+                              setItems((current) =>
+                                current.map((entry) =>
+                                  entry.id === item.id ? { ...entry, price: event.target.value } : entry
+                                )
+                              )
+                            }
+                            className="w-full border border-black/10 px-3 py-3 outline-none transition focus:border-black"
+                          />
+                          <textarea
+                            rows={4}
+                            placeholder="Product description"
+                            value={item.description ?? ""}
+                            onChange={(event) =>
+                              setItems((current) =>
+                                current.map((entry) =>
+                                  entry.id === item.id ? { ...entry, description: event.target.value } : entry
+                                )
+                              )
+                            }
+                            className="w-full resize-y border border-black/10 px-3 py-3 leading-6 outline-none transition focus:border-black"
+                          />
+                          <input
                             type="text"
                             value={item.slug}
                             onChange={(event) =>
@@ -969,6 +1029,8 @@ export default function AdminPage() {
                         <div className="flex flex-col gap-2">
                           <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a6a6a]">{item.category}</p>
                           <h3 className="font-serif text-2xl leading-tight">{item.name}</h3>
+                          {item.price ? <p className="font-serif text-lg">{formatNaira(String(item.price))}</p> : null}
+                          {item.description ? <p className="line-clamp-3 text-sm leading-6 text-[#6a6a6a]">{item.description}</p> : null}
                           <p className="text-xs uppercase tracking-[0.18em] text-black/70">{item.type}</p>
                           <p className="break-all text-xs text-[#6a6a6a]">{item.slug}</p>
                         </div>
