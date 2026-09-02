@@ -161,11 +161,11 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="border border-black/10 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
+    <section className="min-w-0 border border-black/10 bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.06)] sm:p-8">
       <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">{eyebrow}</p>
-      <h2 className="mt-3 font-serif text-3xl leading-tight">{title}</h2>
+      <h2 className="mt-3 font-serif text-2xl leading-tight sm:text-3xl">{title}</h2>
       {description ? <p className="mt-4 max-w-2xl text-sm leading-7 text-[#6a6a6a]">{description}</p> : null}
-      <div className="mt-8">{children}</div>
+      <div className="mt-6 min-w-0 sm:mt-8">{children}</div>
     </section>
   );
 }
@@ -511,10 +511,10 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[#f4efe6] text-black">
       <div className="mx-auto grid min-h-screen max-w-[1800px] lg:grid-cols-[300px_1fr]">
-        <aside className="border-r border-black/10 bg-[#111111] px-6 py-8 text-white lg:px-8">
-          <div className="space-y-8">
-            <BrandLogo href="" width={210} imageClassName="max-h-10 w-auto brightness-0 invert" />
-            <div className="space-y-3">
+        <aside className="min-w-0 border-b border-black/10 bg-[#111111] px-5 py-6 text-white sm:px-8 lg:border-b-0 lg:border-r lg:px-8 lg:py-8">
+          <div className="space-y-6 lg:space-y-8">
+            <BrandLogo href="" width={210} imageClassName="max-h-9 w-auto brightness-0 invert sm:max-h-10" />
+            <div className="hidden space-y-3 lg:block">
               <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">Admin Studio</p>
               <h1 className="font-serif text-3xl leading-tight">Dion Baci Control Room</h1>
               <p className="text-sm leading-7 text-white/70">
@@ -522,13 +522,13 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <nav className="grid gap-2 text-sm text-white/70">
+            <nav className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 text-sm text-white/70 sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:overflow-visible lg:px-0 lg:pb-0">
               {(Object.keys(viewLabels) as AdminView[]).map((view) => (
                 <button
                   key={view}
                   type="button"
                   onClick={() => setCurrentView(view)}
-                  className={`rounded-full border px-4 py-3 text-left transition ${
+                  className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-3 text-left transition ${
                     currentView === view
                       ? "border-white bg-white text-black"
                       : "border-white/10 hover:border-white/40 hover:text-white"
@@ -539,11 +539,11 @@ export default function AdminPage() {
               ))}
             </nav>
 
-            <div className="grid gap-px border border-white/10 bg-white/10">
+            <div className="grid grid-cols-2 gap-px border border-white/10 bg-white/10 sm:grid-cols-3 lg:grid-cols-1">
               {stats.map((stat) => (
-                <div key={stat.label} className="bg-[#151515] p-5">
+                <div key={stat.label} className="min-w-0 bg-[#151515] p-4 lg:p-5">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-white/50">{stat.label}</p>
-                  <p className="mt-3 font-serif text-3xl text-white">{stat.value}</p>
+                  <p className="mt-2 font-serif text-2xl text-white lg:mt-3 lg:text-3xl">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -554,11 +554,11 @@ export default function AdminPage() {
           </div>
         </aside>
 
-        <div className="space-y-8 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
-          <div className="flex items-end justify-between gap-4 border-b border-black/10 pb-5">
+        <div className="min-w-0 space-y-6 px-4 py-6 sm:space-y-8 sm:px-8 lg:px-10 lg:py-8">
+          <div className="flex flex-col items-start gap-4 border-b border-black/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-[0.24em] text-[#6a6a6a]">Admin Workspace</p>
-              <h2 className="mt-3 font-serif text-4xl">{viewLabels[currentView]}</h2>
+              <h2 className="mt-3 font-serif text-3xl sm:text-4xl">{viewLabels[currentView]}</h2>
             </div>
             <p className="max-w-xl text-sm leading-7 text-[#6a6a6a]">
               A cleaner operations view for products, subscribers, bookings, and consultation settings.
@@ -594,7 +594,7 @@ export default function AdminPage() {
                   <p className="mt-3 font-serif text-3xl">{subscribers.length}</p>
                   <div className="mt-4 space-y-2 text-sm leading-6 text-[#6a6a6a]">
                     {recentSubscribers.length ? recentSubscribers.map((subscriber) => (
-                      <p key={subscriber.id} className="truncate">{subscriber.email}</p>
+                      <p key={subscriber.id} className="break-all sm:truncate">{subscriber.email}</p>
                     )) : <p>No subscribers yet.</p>}
                   </div>
                 </div>
@@ -681,7 +681,7 @@ export default function AdminPage() {
                       type="file"
                       accept="image/*"
                       onChange={(event) => setNewItemFile(event.target.files?.[0] ?? null)}
-                      className="w-full border border-black/10 px-4 py-[0.95rem] text-sm outline-none file:mr-4 file:border-0 file:bg-black file:px-4 file:py-2 file:text-xs file:uppercase file:tracking-[0.18em] file:text-white"
+                    className="min-w-0 w-full border border-black/10 px-3 py-[0.95rem] text-sm outline-none file:mr-2 file:border-0 file:bg-black file:px-3 file:py-2 file:text-xs file:uppercase file:tracking-[0.12em] file:text-white sm:px-4 sm:file:mr-4 sm:file:px-4 sm:file:tracking-[0.18em]"
                     />
                   </label>
                 </div>
@@ -759,15 +759,15 @@ export default function AdminPage() {
                           {booking.service} • {booking.type}
                         </p>
                       </div>
-                      <div className="text-right text-sm leading-7 text-[#6a6a6a]">
+                      <div className="text-left text-sm leading-7 text-[#6a6a6a] sm:text-right">
                         <p>{booking.date}</p>
                         <p>{booking.time}</p>
                       </div>
                     </div>
 
                     <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                      <div className="grid gap-2 text-sm leading-7 text-[#6a6a6a]">
-                        <p><span className="text-black">Email:</span> {booking.email}</p>
+                      <div className="min-w-0 grid gap-2 text-sm leading-7 text-[#6a6a6a]">
+                        <p className="break-all"><span className="text-black">Email:</span> {booking.email}</p>
                         <p><span className="text-black">Phone:</span> {booking.phone}</p>
                         {booking.notes ? (
                           <p><span className="text-black">Notes:</span> {booking.notes}</p>
@@ -788,11 +788,11 @@ export default function AdminPage() {
                             No receipt uploaded
                           </div>
                         )}
-                        <div className="flex flex-wrap gap-3">
+                        <div className="grid gap-3 sm:flex sm:flex-wrap">
                           <button
                             type="button"
                             onClick={() => handleBookingStatus(booking, "confirmed")}
-                            className="luxury-button px-4 py-2"
+                            className="luxury-button justify-center px-4 py-2"
                             disabled={bookingSavingId === booking.id}
                           >
                             {bookingSavingId === booking.id && booking.status !== "confirmed"
@@ -802,7 +802,7 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => handleBookingStatus(booking, "pending")}
-                            className="luxury-button luxury-button--ghost px-4 py-2"
+                            className="luxury-button luxury-button--ghost justify-center px-4 py-2"
                             disabled={bookingSavingId === booking.id}
                           >
                             Set Pending
@@ -810,7 +810,7 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => handleBookingDelete(booking.id)}
-                            className="luxury-button px-4 py-2"
+                            className="luxury-button justify-center px-4 py-2"
                             disabled={bookingSavingId === booking.id}
                           >
                             Delete
@@ -841,10 +841,10 @@ export default function AdminPage() {
                 subscribers.map((subscriber) => (
                   <article
                     key={subscriber.id}
-                    className="flex flex-wrap items-center justify-between gap-4 border border-black/10 bg-[#fcfbf8] p-5"
+                    className="flex min-w-0 flex-col items-start gap-4 border border-black/10 bg-[#fcfbf8] p-5 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="space-y-1">
-                      <p className="font-medium text-black">{subscriber.email}</p>
+                    <div className="min-w-0 space-y-1">
+                      <p className="break-all font-medium text-black">{subscriber.email}</p>
                       <p className="text-sm text-[#6a6a6a]">
                         {new Date(subscriber.createdAt).toLocaleDateString("en-NG", {
                           day: "numeric",
@@ -856,7 +856,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => handleSubscriberDelete(subscriber.id)}
-                      className="luxury-button px-4 py-2"
+                      className="luxury-button w-full justify-center px-4 py-2 sm:w-auto"
                     >
                       Delete
                     </button>
@@ -961,7 +961,7 @@ export default function AdminPage() {
                                 [item.id]: event.target.files?.[0] ?? null,
                               }))
                             }
-                            className="w-full border border-black/10 px-3 py-3 text-sm outline-none file:mr-4 file:border-0 file:bg-black file:px-4 file:py-2 file:text-xs file:uppercase file:tracking-[0.18em] file:text-white"
+                            className="min-w-0 w-full border border-black/10 px-3 py-3 text-sm outline-none file:mr-2 file:border-0 file:bg-black file:px-3 file:py-2 file:text-xs file:uppercase file:tracking-[0.12em] file:text-white sm:file:mr-4 sm:file:px-4 sm:file:tracking-[0.18em]"
                           />
                           <p className="break-all text-xs text-[#6a6a6a]">{item.image}</p>
                         </div>
