@@ -26,11 +26,7 @@ export default function ContactPage() {
           <div className="bg-paper p-8 sm:p-10">
             <p className="eyebrow">Address</p>
             <p className="mt-6 text-3xl leading-tight">
-              House 8, Angle View Estate
-              <br />
-              Chevron Alternative Route
-              <br />
-              Lekki, Lagos, Nigeria
+              Lekki, Lagos Nigeria
             </p>
           </div>
         </div>

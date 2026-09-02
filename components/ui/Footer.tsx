@@ -118,11 +118,7 @@ export function Footer() {
                 <a href="mailto:Dionbaci@gmail.com">Dionbaci@gmail.com</a>
               </p>
               <p>
-                House 8, Angle View Estate
-                <br />
-                Chevron Alternative Route
-                <br />
-                Lekki, Lagos, Nigeria
+                Lekki, Lagos Nigeria
               </p>
             </div>
           </div>
