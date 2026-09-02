@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { curatedBeautyByImage, curatedBeautyCatalog, curatedBeautyImageSet } from "@/lib/beauty-catalog";
-import { curatedLookByImage, curatedLookCatalog, curatedLookImageSet } from "@/lib/look-catalog";
+import { curatedBeautyByImage, curatedBeautyCatalog } from "@/lib/beauty-catalog";
+import { curatedLookByImage, curatedLookCatalog } from "@/lib/look-catalog";
 import { ShopItem } from "@/data/shop";
 
 const FALLBACK_IMAGE = "/images/fallback.jpg";
@@ -149,38 +149,16 @@ export async function getItemsByType(type: "look" | "beauty") {
       },
     });
 
-    const items = mergeCuratedBeautyItems(
-      rows
+    const items = rows
       .map((item) => normalizeItem(item))
-      .filter((item): item is ShopItem => item !== null)
-    );
+      .filter((item): item is ShopItem => item !== null && item.type === type);
 
     if (type === "beauty") {
-      const curatedOrder = new Map<string, number>(
-        curatedBeautyCatalog.map((item, index) => [item.image, index])
-      );
-
-      return items
-        .filter((item) => curatedBeautyImageSet.has(item.image))
-        .sort((left, right) => {
-          const leftIndex = curatedOrder.get(left.image) ?? 999;
-          const rightIndex = curatedOrder.get(right.image) ?? 999;
-          return leftIndex - rightIndex;
-        });
+      return mergeCuratedBeautyItems(items);
     }
 
     if (type === "look") {
-      const curatedOrder = new Map<string, number>(
-        curatedLookCatalog.map((item, index) => [item.image, index])
-      );
-
-      return items
-        .filter((item) => curatedLookImageSet.has(item.image))
-        .sort((left, right) => {
-          const leftIndex = curatedOrder.get(left.image) ?? 999;
-          const rightIndex = curatedOrder.get(right.image) ?? 999;
-          return leftIndex - rightIndex;
-        });
+      return mergeCuratedLookItems(items);
     }
 
     return items;
